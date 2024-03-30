@@ -8,6 +8,7 @@ export default defineConfig(async () => ({
     rollupOptions: {
         input: {
             launcher: resolve(__dirname, "launcher/index.html"),
+            mfaCache: resolve(__dirname, "mfaCache/index.html")
         }
     }
   },
