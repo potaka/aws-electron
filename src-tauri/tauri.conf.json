@@ -19,9 +19,11 @@
     },
     "windows": [
       {
-        "title": "aws-console",
+        "title": "AWS Console",
+        "label": "launcher",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "url": "launcher/index.html"
       }
     ],
     "security": {
