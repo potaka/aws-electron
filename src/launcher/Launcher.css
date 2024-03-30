@@ -1,0 +1,15 @@
+.heading {
+    font-weight: bolder;
+    min-height: 3rem;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: white;
+}
+
+.profile:nth-child(even) {
+    background-color: lightgray;
+}
+.profile:nth-child(2) {
+    padding-top: 3rem;
+}
