@@ -19,6 +19,8 @@ rust-ini = "0.21.0"
 derive-new = "0.6.0"
 homedir = "0.2.1"
 serde_derive = "1.0.197"
+notify = { version = "6.1.1", default-features = false, features = ["macos_kqueue"] }
+futures = "0.3.30"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
