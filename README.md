@@ -1,6 +1,5 @@
-# Tauri + React + Typescript
-
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+# aws-electron
+Access the AWS Console using Access Keys and assumed roles.
 
 ## Recommended IDE Setup
 
