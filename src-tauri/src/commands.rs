@@ -1,10 +1,7 @@
 use crate::config;
-use config::parser::Profile;
+use config::parser::Config;
 
-use std::{
-    collections::HashMap,
-    path::PathBuf
-};
+use std::path::PathBuf;
 
 use tauri::{
     AppHandle,
@@ -30,10 +27,10 @@ pub async fn open_mfa_cache(app_handle: AppHandle) {
 }
 
 #[tauri::command]
-pub async fn load_config() -> HashMap<String, Profile> {
+pub async fn get_aws_config() -> Config {
     let task = async_runtime::spawn_blocking(
-        || -> Result<HashMap<String, Profile>, task::JoinError> {
-            let config = config::parser::load_config();
+        || -> Result<Config, task::JoinError> {
+            let config = config::parser::get_aws_config();
             Ok(config)
     });
 

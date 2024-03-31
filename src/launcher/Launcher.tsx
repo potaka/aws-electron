@@ -24,7 +24,7 @@ function Launcher() {
   // hook to fetch config in case the initial event was lost
   useEffect(() => {
     if(!config) {
-      invoke("load_config").then((newConfig): void => {
+      invoke("get_aws_config").then((newConfig): void => {
         setConfig(ConfigSchema.parse(newConfig))
       })
     }
@@ -67,7 +67,7 @@ function Launcher() {
         </CCol>
         <CCol xs={1}/>
       </CRow>
-      {config && Object.entries(config).sort(
+      {config && Object.entries(config.config).sort(
         ([_a, {order: a}], [_b, {order: b}]) => a - b
       ).map(([profileName, profile]) => {
         const roleArn = profile.role_arn as string | null

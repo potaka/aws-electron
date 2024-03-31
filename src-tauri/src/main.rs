@@ -14,7 +14,7 @@ async fn send_aws_config(
     app: AppHandle,
 ) {
     let launcher_window: Window = app.get_window("launcher").unwrap();
-    let config = commands::load_config().await;
+    let config = commands::get_aws_config().await;
     _ = launcher_window.emit("new-config", config);
 }
 
@@ -34,7 +34,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::open_mfa_cache,
-            commands::load_config,
+            commands::get_aws_config,
         ])
         .menu(menu::menu())
         .on_menu_event(|event| menu::menu_event(event))

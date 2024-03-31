@@ -32,13 +32,15 @@ pub struct Credential {
     pub aws_session_token: Option<String>
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
     pub config: HashMap<String, Profile>,
 
     pub credentials_profiles: Vec<String>,
 
     pub long_term_credentials_profiles: Vec<String>,
+
+    pub usable_profiles: Vec<String>,
 }
 
 pub fn get_aws_config() -> Config {
@@ -65,10 +67,13 @@ pub fn get_aws_config() -> Config {
         })
         .collect();
 
+    let usable_profiles = get_usable_profiles(&config, &credentials_profiles);
+
     Config {
         config,
         credentials_profiles,
         long_term_credentials_profiles,
+        usable_profiles,
     }
 }
 
@@ -217,7 +222,7 @@ fn profile_name(profile_name: &str) -> String {
     }
 }
 
-pub fn load_config() -> HashMap<String, Profile> {
+fn load_config() -> HashMap<String, Profile> {
     let mut config_path = super::get_aws_config_dir();
     config_path.push("config");
 
@@ -257,7 +262,7 @@ pub fn load_config() -> HashMap<String, Profile> {
 }
 
 
-pub fn load_credentials() -> HashMap<String, Credential> {
+fn load_credentials() -> HashMap<String, Credential> {
     let mut credentials_path = super::get_aws_config_dir();
     credentials_path.push("credentials");
 
