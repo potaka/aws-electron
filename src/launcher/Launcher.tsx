@@ -10,6 +10,7 @@ import ProfileEntry from "./ProfileEntry";
 
 function Launcher() {
   const [config, setConfig] = useState<Config | undefined>(undefined)
+  const [mfaCode, setMfaCode] = useState<string>("");
 
   // listener for new config
   useEffect(() =>{
@@ -79,6 +80,22 @@ function Launcher() {
           }}
         />
       ))}
+      {config && config.usable_profiles.some(
+        (profile: string) => config.config[profile].mfa_serial !== undefined,
+      ) ? (
+        <CRow className="mfaBox">
+          <CCol>
+            <CFormInput
+              type="text"
+              value={mfaCode}
+              placeholder="MFA Code"
+              onChange={(
+                event: React.ChangeEvent<HTMLInputElement>,
+              ) => setMfaCode(event.target.value)}
+            />
+          </CCol>
+        </CRow>
+        ) : null}
     </CContainer>
   </>
 }
