@@ -20,8 +20,7 @@ pub struct Profile {
     pub additional_properties: std::collections::HashMap<String, String>,
 }
 
-#[derive(new)]
-#[derive(Clone)]
+#[derive(new, Clone)]
 pub struct Credential {
     #[new(default)]
     pub aws_access_key_id: String,
