@@ -5,8 +5,10 @@ mod commands;
 mod config;
 mod menu;
 use tauri::menu::MenuEvent;
-use tauri::{async_runtime, window::Window, App, AppHandle, Manager};
-use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    async_runtime, window::Window, App, AppHandle, Manager, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
+};
 
 fn main() {
     tauri::Builder::default()

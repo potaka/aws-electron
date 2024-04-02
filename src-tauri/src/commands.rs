@@ -32,10 +32,9 @@ pub async fn open_mfa_cache(app_handle: AppHandle) {
 
 #[tauri::command]
 pub async fn get_aws_config() -> Config {
-    let task = async_runtime::spawn_blocking(
-        || -> Result<Config, task::JoinError> {
-            let config = config::parser::get_aws_config();
-            Ok(config)
+    let task = async_runtime::spawn_blocking(|| -> Result<Config, task::JoinError> {
+        let config = config::parser::get_aws_config();
+        Ok(config)
     });
 
     let result = task.await.unwrap();
