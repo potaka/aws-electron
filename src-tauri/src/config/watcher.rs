@@ -4,7 +4,7 @@ use futures::{
 };
 use notify::{event::{AccessKind, AccessMode}, Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, EventTarget, Manager};
 
 fn async_watcher() -> notify::Result<(RecommendedWatcher, Receiver<notify::Result<Event>>)> {
     let (mut tx, rx) = channel(1);
@@ -37,10 +37,11 @@ pub async fn async_watch(app_handle: AppHandle) -> notify::Result<()> {
                     EventKind::Access(AccessKind::Close(AccessMode::Write)) => {
                         let changed_file: &PathBuf = &event.paths[0];
                         if changed_file.file_name().unwrap() == "config" {
-                            app_handle.trigger_global(
+                            app_handle.emit_to(
+                                EventTarget::webview_window("launcher"),
                                 "file-change",
                                 Some(String::from(changed_file.file_name().unwrap().to_str().unwrap())),
-                            )
+                            ).unwrap();
                         }
 
                     },

@@ -8,10 +8,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1", features = [] }
+tauri-build = { version = "2.0.0-beta", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = ["shell-open"] }
+tauri = { version = "2.0.0-beta", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1.36.0", features = ["full"] }
@@ -21,6 +21,9 @@ homedir = "0.2.1"
 serde_derive = "1.0.197"
 notify = { version = "6.1.1", default-features = false, features = ["macos_kqueue"] }
 futures = "0.3.30"
+tauri-macros = "1.4.3"
+tauri-runtime-wry = "2.0.0-beta.10"
+tauri-plugin-shell = "2.0.0-beta"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

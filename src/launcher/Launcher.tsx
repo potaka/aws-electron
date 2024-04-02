@@ -1,7 +1,7 @@
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from '@tauri-apps/api/event';
 import { CCol, CContainer, CFormInput, CRow } from "@coreui/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Config, ConfigSchema } from "../types";
 import "../App.css";
 import "../styles.css";
@@ -12,25 +12,26 @@ function Launcher() {
   const [config, setConfig] = useState<Config | undefined>(undefined)
   const [mfaCode, setMfaCode] = useState<string>("");
 
+  const fetchConfig = useCallback(
+    async () => setConfig(ConfigSchema.parse(await invoke("get_aws_config"))),
+    []
+  );
+
   // listener for new config
-  useEffect(() =>{
+  useEffect(() => {
     // don't resolve await the promise until you need it for unregistering the listener
-    const unlistenerPromise = listen("new-config", (event) => {
-      setConfig(ConfigSchema.parse(event.payload))
-    });
+    const unlistenerPromise = listen("file-change", () => fetchConfig());
     return () => {
-      unlistenerPromise.then(unlisten => unlisten());
+      unlistenerPromise.then(unlisten => unlisten())
     }
-  }, [])
+  }, [fetchConfig])
 
   // hook to fetch config in case the initial event was lost
   useEffect(() => {
     if(!config) {
-      invoke("get_aws_config").then((newConfig): void => {
-        setConfig(ConfigSchema.parse(newConfig))
-      })
+      fetchConfig()
     }
-  }, [config])
+  }, [config, fetchConfig])
 
   return <>
     <CContainer fluid>
@@ -75,9 +76,7 @@ function Launcher() {
         <ProfileEntry key={profileName}
           profileName={profileName}
           profile={profile}
-          launchAction={async () => {
-            await invoke("launch-profile", {profile_name: profileName})
-          }}
+          launchAction={() => invoke("launch_profile", {profile_name: profileName})}
         />
       ))}
       {config && config.usable_profiles.some(
