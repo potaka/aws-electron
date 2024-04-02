@@ -1,29 +1,33 @@
-use crate::config;
+use crate::{config, menu};
 use config::parser::Config;
 
 use std::path::PathBuf;
 
 use tauri::{
-    AppHandle,
-    WindowBuilder,
-    WindowUrl,
-    async_runtime,
+    async_runtime, menu::MenuEvent, AppHandle, Manager, WebviewUrl, WebviewWindowBuilder, Window,
 };
 
 use tokio::task;
-
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 pub async fn open_mfa_cache(app_handle: AppHandle) {
     // TODO is some check for existing window necessary?
-    let _mfa_cache_window = WindowBuilder::new(
+    let menu = menu::menu(&app_handle, String::from("mfaCache")).unwrap();
+
+    WebviewWindowBuilder::new(
         &app_handle,
         "mfaCache",
-        WindowUrl::App("mfaCache/index.html".into()).into())
+        WebviewUrl::App("mfaCache/index.html".into()).into(),
+    )
     .data_directory(PathBuf::from("mfaCache"))
+    .menu(menu)
+    .on_menu_event(move |win: &Window, event: MenuEvent| {
+        menu::menu_event(event, win);
+    })
     .title("AWS Console - MFA Cache")
-    .build();
+    .build()
+    .unwrap();
 }
 
 #[tauri::command]

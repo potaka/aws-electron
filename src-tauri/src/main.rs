@@ -4,17 +4,13 @@
 mod commands;
 mod config;
 mod menu;
-use tauri::{
-    AppHandle,
-    Manager,
-    Window,
-    async_runtime,
-};
+use tauri::menu::MenuEvent;
+use tauri::{async_runtime, window::Window, App, AppHandle, Manager};
+use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
-            let app_handle = app.app_handle();
+        .setup(|app: &mut App| {
             // watch for changes to the config file
             async_runtime::spawn(
                 config::watcher::async_watch(
@@ -22,6 +18,17 @@ fn main() {
                 )
             );
 
+            let menu = menu::menu(app.handle(), String::from("launcher")).unwrap();
+            let window: WebviewWindow = WebviewWindowBuilder::new(
+                app,
+                "launcher",
+                WebviewUrl::App("launcher/index.html".into()).into(),
+            )
+            .menu(menu)
+            .on_menu_event(move |win: &Window, event: MenuEvent| {
+                menu::menu_event(event, win);
+            })
+            .build()?;
 
             Ok(())
         })
@@ -29,8 +36,6 @@ fn main() {
             commands::open_mfa_cache,
             commands::get_aws_config,
         ])
-        .menu(menu::menu())
-        .on_menu_event(|event| menu::menu_event(event))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
