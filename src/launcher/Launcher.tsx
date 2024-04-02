@@ -76,7 +76,7 @@ function Launcher() {
         <ProfileEntry key={profileName}
           profileName={profileName}
           profile={profile}
-          launchAction={() => invoke("launch_profile", {profile_name: profileName})}
+          launchAction={() => invoke("launch_profile", {profileName})}
         />
       ))}
       {config && config.usable_profiles.some(

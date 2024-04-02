@@ -34,6 +34,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::open_mfa_cache,
             commands::get_aws_config,
+            commands::launch_profile,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
