@@ -23,6 +23,7 @@ fn main() {
                 WebviewUrl::App("launcher/index.html".into()).into(),
             )
             .menu(menu)
+            .title("AWS Console - Profile List")
             .on_menu_event(move |win: &Window, event: MenuEvent| {
                 menu::menu_event(event, win);
             })
