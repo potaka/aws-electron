@@ -12,11 +12,7 @@ fn main() {
     tauri::Builder::default()
         .setup(|app: &mut App| {
             // watch for changes to the config file
-            async_runtime::spawn(
-                config::watcher::async_watch(
-                    app.app_handle().clone()
-                )
-            );
+            async_runtime::spawn(config::watcher::async_watch(app.app_handle().clone()));
 
             let menu = menu::menu(app.handle(), String::from("launcher")).unwrap();
             let window: WebviewWindow = WebviewWindowBuilder::new(
