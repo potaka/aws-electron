@@ -1,16 +1,34 @@
-# aws-electron
-Access the AWS Console using Access Keys and assumed roles.
+# aws-console
 
-## Development notes:
-### Old dependency versions
-1. `react`, `react-dom`, `@types/react` and `@types/react-dom` don't seem to
-   want to go newer than 17.x
-1. `urllib` doesn't seem to be able to go newer than 2.X (loses support for
-   specifying a custom agent & upgrades `proxy-agent`)
-1. `query-string` goes to ESM in 8.x.  We can't upgrade yet because `mocha` /
-   `chai` don't like it, & upgrading to `ts-jest` is not straight forward.
-1. `chai` itself doesn't seem to want to upgrade beyond 4.x
+An Electron application with React and TypeScript
 
-### TODOs
-1.  `url.format` is depricated, but the alternative is rather shitty.
-    * I'm thinking about reimplementing `url.format` to wrap the shittyness.
+## Recommended IDE Setup
+
+- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+## Project Setup
+
+### Install
+
+```bash
+$ npm install
+```
+
+### Development
+
+```bash
+$ npm run dev
+```
+
+### Build
+
+```bash
+# For windows
+$ npm run build:win
+
+# For macOS
+$ npm run build:mac
+
+# For Linux
+$ npm run build:linux
+```

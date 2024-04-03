@@ -1,10 +1,10 @@
 {
   "name": "aws-console",
-  "author": "Philip Dowie <philip@jnawk.nz>",
+  "version": "4.0.0",
   "description": "AWS Console",
-  "license": "ISC",
-  "version": "3.3.1",
-  "main": "./dist/main.bundle.js",
+  "main": "./out/main/index.js",
+  "author": "Philip Dowie <philip@jnawk.nz>",
+  "homepage": "https://github.com/jnawk/aws-electron/blob/master/README.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jnawk/aws-electron.git"
@@ -15,126 +15,44 @@
   "keywords": [
     "AWS"
   ],
-  "homepage": "https://github.com/jnawk/aws-electron/blob/master/README.md",
-  "build": {
-    "appId": "jnawk.aws-console",
-    "productName": "AWS Console",
-    "directories": {
-      "app": "./dist/",
-      "output": "./out/",
-      "buildResources": "build"
-    },
-    "mac": {
-      "target": "zip"
-    },
-    "win": {
-      "target": [
-        "portable",
-        "nsis",
-        "7z",
-        "zip"
-      ],
-      "asar": true
-    },
-    "linux": {
-      "category": "Utility",
-      "target": [
-        "AppImage",
-        "zip",
-        "tar.gz"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    },
-    "buildVersion": "1"
-  },
   "scripts": {
-    "test": "mocha -r ts-node/register -r tsconfig-paths/register \"test/**/*.ts\"",
-    "start": "electron ./dist/main.bundle.js",
-    "dev": "rimraf dist && cross-env NODE_ENV=development webpack --watch --progress --color",
-    "devOne": "rimraf dist && cross-env NODE_ENV=development webpack --progress --color",
-    "prod": "rimraf dist && cross-env NODE_ENV=production webpack --progress --color",
-    "dist": "npm i; electron-icon-builder --flatten --input=icon.png --output=build/; npm run prod; electron-builder build --linux --mac --x64; npm run dist:win; npm i",
-    "dist:mac": "electron-builder build --mac --x64",
-    "dist:linux": "electron-builder build --linux --x64",
-    "dist:win": "bash -c \"docker run --ulimit nofile=5000:5000 --rm -ti --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS_TAG|TRAVIS|TRAVIS_REPO_|TRAVIS_BUILD_|TRAVIS_BRANCH|TRAVIS_PULL_REQUEST_|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') --env ELECTRON_CACHE=/.cache/electron --env ELECTRON_BUILDER_CACHE=/.cache/electron-builder -v ${PWD}:/project:z -v ${PWD##*/}node-modules:/project/node_modules:z -v ~/.cache/electron:/.cache/electron:z -v ~/.cache/electron-builder:/.cache/electron-builder:z electronuserland/builder:wine bash -c \\\"ls -lan /root; chown -R 1000 /root /.cache; chown -R root /root/.wine; npm i -g npm && npm i && id && npm run dist:win:docker\\\"\"",
-    "dist:win:docker": "electron-builder --windows",
-    "lint": "eslint src test",
-    "lint:fix": "eslint --fix src test"
+    "format": "prettier --write .",
+    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "start": "electron-vite preview",
+    "dev": "(cd models; npm run build); electron-vite dev --clearScreen false",
+    "build": "(cd models; npm run build); npm run typecheck && electron-vite build --clearScreen false",
+    "postinstall": "electron-builder install-app-deps",
+    "build:unpack": "npm run build && electron-builder --dir",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
-    "@aws-sdk/client-iam": "^3",
-    "@aws-sdk/client-sts": "^3",
-    "@aws-sdk/credential-provider-ini": "^3",
-    "@aws-sdk/credential-providers": "^3",
-    "@aws-sdk/types": "^3",
-    "@smithy/node-http-handler": "^2.5.0",
-    "bootstrap": "^5",
-    "classnames": "^2.5.1",
-    "debounce": "^2.0.0",
-    "electron-context-menu": "^3",
-    "electron-settings": "^4.0.2",
-    "ini": "^4.1.2",
-    "proxy-agent": "^6.4.0",
-    "query-string": "<8",
-    "react": "^17",
-    "react-dom": "^17",
-    "react-router": "^6",
-    "react-router-dom": "^6",
-    "react-transition-group": "^4",
-    "reactstrap": "^9",
-    "split-ca": "^1.0.1",
-    "sprintf-js": "^1.1.3",
-    "urllib": "^2.41.0"
+    "@electron-toolkit/preload": "^3.0.0",
+    "@electron-toolkit/utils": "^3.0.0",
+    "electron-updater": "^6.1.7",
+    "models": "file:models"
   },
   "devDependencies": {
-    "@types/chai": "^4",
-    "@types/debounce": "^1.2.4",
-    "@types/ini": "^4.1.0",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.30",
-    "@types/react": "^17",
-    "@types/react-dom": "^17",
-    "@types/react-router": "^5",
-    "@types/react-router-dom": "^5",
-    "@types/react-transition-group": "^4",
-    "@types/sprintf-js": "^1.1.4",
-    "@typescript-eslint/eslint-plugin": "^7.4.0",
-    "@typescript-eslint/parser": "^7.4.0",
-    "chai": "^4.3.8",
-    "copy-webpack-plugin": "^12.0.2",
-    "cross-env": "^7.0.3",
-    "css-loader": "^6",
-    "electron": "^29.1.5",
-    "electron-builder": "^24.13.3",
-    "electron-icon-builder": "^2.0.1",
-    "eslint": "^8.57.0",
-    "eslint-config-airbnb": "^19",
-    "eslint-import-resolver-webpack": "^0",
-    "eslint-plugin-import": "^2",
-    "eslint-plugin-jsx-a11y": "^6",
-    "eslint-plugin-mocha": "^10",
-    "eslint-plugin-react": "^7",
-    "eslint-plugin-react-hooks": "^4",
-    "file-loader": "^6.2.0",
-    "html-webpack-plugin": "^5",
-    "lodash": "^4",
-    "mocha": "^10.3.0",
-    "rimraf": "^5.0.5",
-    "source-map-loader": "^5.0.0",
-    "style-loader": "^3",
-    "ts-loader": "^9",
-    "ts-node": "^10",
-    "tsconfig-paths": "^4",
+    "@electron-toolkit/eslint-config-prettier": "^2.0.0",
+    "@electron-toolkit/eslint-config-ts": "^1.0.1",
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/node": "^18.19.9",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-vite": "^2.0.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "prettier": "^3.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "typescript": "^5.4.3",
-    "webpack": "^5",
-    "webpack-cli": "^5.1.4"
-  },
-  "overrides": {
-    "urllib": {
-      "proxy-agent": "^6.3.0"
+    "vite": "^5.0.12"
     }
-  }
 }

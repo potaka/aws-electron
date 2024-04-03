@@ -1,0 +1,26 @@
+{
+  "name": "models",
+  "version": "1.0.0",
+  "description": "AWS Console models",
+  "main": "dist/models.umd.js",
+  "module": "dict/models.es.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && vite build"
+  },
+  "types": "dist/models.d.mts",
+  "keywords": [],
+  "exports": {
+    ".": {
+      "import": "./dist/models.es.js",
+      "require": "./dist/models.umd.js"
+    }
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.4.3",
+    "vite": "^5.2.7",
+    "vite-plugin-dts": "^3.8.1"
+  }
+}
