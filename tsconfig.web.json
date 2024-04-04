@@ -7,9 +7,6 @@
     "src/preload/*.d.ts",
     "models/src/*"
   ],
-  "exclude": [
-    "src/models/src/main.ts"
-  ],
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
