@@ -2,11 +2,9 @@ import { app, shell, BrowserWindow, ipcMain } from "electron"
 import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
-
-import { helloWorld } from "models"
+import { getConfig } from "./awsConfig"
 
 function createWindow(): void {
-  console.log(helloWorld())
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -53,8 +51,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on("ping", (_event, payload) => console.log("pong", payload))
+  ipcMain.handle("getConfig", () => getConfig())
 
   createWindow()
 
