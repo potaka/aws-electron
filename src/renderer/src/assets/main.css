@@ -1,5 +1,7 @@
 body {
   user-select: none;
+  width: 108%;
+  overflow-x: clip;
 }
 
 code {
@@ -18,11 +20,17 @@ code {
   font-size: 85%;
 }
 
+.container-fluid {
+  padding-right: 0;
+}
+
+/* #root {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   margin-bottom: 80px;
+} */
 
 .tip {
   font-size: 16px;
@@ -40,10 +48,17 @@ code {
   background-color: white;
 }
 
+.profile:nth-child(even) > div:not(.launchButton) {
+  background-color: lightgray;
 }
 
+.profile.row {
+  width: 100%;
+  padding-bottom: 1px;
 }
 
+.launchButton {
+margin-left: 5px;
 }
 
 .profile:nth-child(2) {

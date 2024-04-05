@@ -2,6 +2,7 @@ import { CCol, CContainer, CFormInput, CRow } from "@coreui/react"
 import "@coreui/coreui/dist/css/coreui.min.css"
 import { useEffect, useState } from "react"
 import { Config, ConfigSchema } from "models"
+import ProfileRow from "./ProfileRow"
 
 function ProfileList(): JSX.Element {
   const [config, setConfig] = useState<Config | undefined>(undefined)
@@ -42,8 +43,12 @@ function ProfileList(): JSX.Element {
             .filter(([profileName]) =>
               config.usableProfiles.includes(profileName),
             )
-            .map(([profileName]) => (
-              <CRow key={profileName}>{profileName}</CRow>
+            .map(([profileName, profile]) => (
+              <ProfileRow
+                key={profileName}
+                profileName={profileName}
+                profile={profile}
+              />
             ))}
         {config &&
         config.usableProfiles.some(
