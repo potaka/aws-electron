@@ -1,10 +1,11 @@
-import { CCol, CContainer, CRow } from "@coreui/react"
+import { CCol, CContainer, CFormInput, CRow } from "@coreui/react"
 import "@coreui/coreui/dist/css/coreui.min.css"
 import { useEffect, useState } from "react"
 import { Config, ConfigSchema } from "models"
 
 function ProfileList(): JSX.Element {
   const [config, setConfig] = useState<Config | undefined>(undefined)
+  const [mfaCode, setMfaCode] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (!config) {
@@ -44,6 +45,24 @@ function ProfileList(): JSX.Element {
             .map(([profileName]) => (
               <CRow key={profileName}>{profileName}</CRow>
             ))}
+        {config &&
+        config.usableProfiles.some(
+          (profile: string) =>
+            config.profiles[profile].mfa_serial !== undefined,
+        ) ? (
+          <CRow className="mfaBox">
+            <CCol>
+              <CFormInput
+                type="text"
+                value={mfaCode}
+                placeholder="MFA Code"
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setMfaCode(event.target.value)
+                }
+              />
+            </CCol>
+          </CRow>
+        ) : null}
       </CContainer>
     </>
   )

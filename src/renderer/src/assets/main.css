@@ -41,4 +41,7 @@ code {
 
 }
 
+.mfaBox {
+  position: sticky;
+  bottom: 0;
 }
