@@ -31,6 +31,13 @@ code {
   font-weight: 600;
 }
 
+.heading {
+  font-weight: bolder;
+  min-height: 3rem;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: white;
 }
 
 }
@@ -39,6 +46,8 @@ code {
 
 }
 
+.profile:nth-child(2) {
+  padding-top: 3rem;
 }
 
 .mfaBox {

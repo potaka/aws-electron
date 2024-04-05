@@ -18,7 +18,7 @@ function ProfileList(): JSX.Element {
   return (
     <>
       <CContainer fluid>
-        <CRow className="heading">
+        <CRow className="heading" xs={{ gutter: 0 }}>
           <CCol className="d-none d-sm-table-cell" sm={3} lg={2}>
             Profile Name
           </CCol>
