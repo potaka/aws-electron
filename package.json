@@ -23,7 +23,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "(cd models; npm run build); electron-vite dev --clearScreen false",
-    "build": "(cd models; npm run build); npm run typecheck && electron-vite build --clearScreen false",
+    "build": "cd models && npm run build && cd .. && npm run typecheck && electron-vite build --clearScreen false",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
