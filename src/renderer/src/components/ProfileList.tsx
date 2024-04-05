@@ -14,8 +14,6 @@ function ProfileList(): JSX.Element {
     }
   }, [config])
 
-  console.log(config)
-
   return (
     <>
       <CContainer fluid>
