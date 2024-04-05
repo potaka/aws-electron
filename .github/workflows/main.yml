@@ -33,8 +33,17 @@ jobs:
       - name: install frontend dependencies
         run: npm install # change this to npm or pnpm depending on which one you use
 
-      - name: package app
-        run:
+      - name: package app (linux)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: npm run build:linux
+
+      - name: package app (mac)
+        if: matrix.platform == 'macos-latest'
+        run: npm run build:mac
+
+      - name: package app (win)
+        if: matrix.platform == 'windows-latest'
+        run: npm run build:win
 
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
