@@ -4,6 +4,7 @@ import * as fs from "fs"
 import * as util from "util"
 import { Config, CredentialsSchema, Profile, ProfileSchema } from "models"
 import * as ini from "ini"
+import debounce from "debounce"
 
 const readFile = util.promisify(fs.readFile)
 
@@ -131,4 +132,23 @@ export async function getConfig({
     longTermCredentialProfiles,
     usableProfiles,
   }
+}
+
+export function watchConfigFile(callback: { (newConfig: Config): void }): void {
+  const configChanged = debounce(async () => {
+    callback(await getConfig())
+  }, 10)
+
+  fs.watch(
+    path.join(os.homedir(), ".aws"),
+    { persistent: false },
+    (eventType: string, filename: string | Buffer | null) => {
+      if (filename !== "config") {
+        return
+      }
+      if (eventType === "change") {
+        configChanged()
+      }
+    },
+  )
 }

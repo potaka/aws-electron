@@ -2,8 +2,9 @@ import { app, shell, BrowserWindow, ipcMain } from "electron"
 import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
-import { getConfig } from "./awsConfig"
+import { getConfig, watchConfigFile } from "./awsConfig"
 import { createReducer, reducer } from "./appState"
+import { Config } from "models"
 const [state, dispatch] = createReducer({}, reducer)
 
 function createWindow(): void {
@@ -57,6 +58,10 @@ app.whenReady().then(() => {
   ipcMain.handle("getConfig", () => getConfig())
 
   createWindow()
+
+  watchConfigFile((newConfig: Config) =>
+    state.mainWindow!.webContents.send("new-config", newConfig),
+  )
 
   app.on("activate", function () {
     // On macOS it's common to re-create a window in the app when the
