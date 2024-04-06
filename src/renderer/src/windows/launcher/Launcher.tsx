@@ -1,17 +1,48 @@
-import { CCol, CContainer, CFormInput, CRow } from "@coreui/react"
 import "@coreui/coreui/dist/css/coreui.min.css"
-import { useEffect, useState } from "react"
+import "../../assets/main.css"
+import { CCol, CContainer, CFormInput, CRow } from "@coreui/react"
+import { useEffect, useReducer } from "react"
 import { Config, ConfigSchema } from "models"
-import ProfileRow from "./ProfileRow"
+import ProfileRow from "../..//components/ProfileRow"
+const { ipcRenderer } = window.electron
 
-function ProfileList(): JSX.Element {
-  const [config, setConfig] = useState<Config | undefined>(undefined)
-  const [mfaCode, setMfaCode] = useState<string | undefined>(undefined)
+interface LauncherState {
+  config?: Config
+  mfaCode?: string
+}
+
+interface SetConfig {
+  type: "set-config"
+  payload: Config
+}
+
+interface SetMfaCode {
+  type: "set-mfa-code"
+  payload: string
+}
+
+type LauncherEvent = SetConfig | SetMfaCode
+
+function dispatcher(state: LauncherState, event: LauncherEvent): LauncherState {
+  switch (event.type) {
+    case "set-config":
+      return { ...state, config: event.payload }
+    case "set-mfa-code":
+      return { ...state, mfaCode: event.payload }
+  }
+}
+
+function Launcher(): JSX.Element {
+  const [{ config, mfaCode }, dispatch] = useReducer(dispatcher, {})
+
+  ipcRenderer.on("new-config", (_event, config: Config) => {
+    dispatch({ type: "set-config", payload: ConfigSchema.parse(config) })
+  })
 
   useEffect(() => {
     if (!config) {
       window.electron.ipcRenderer.invoke("getConfig").then((result) => {
-        setConfig(ConfigSchema.parse(result))
+        dispatch({ type: "set-config", payload: ConfigSchema.parse(result) })
       })
     }
   }, [config])
@@ -62,7 +93,10 @@ function ProfileList(): JSX.Element {
                 value={mfaCode}
                 placeholder="MFA Code"
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setMfaCode(event.target.value)
+                  dispatch({
+                    type: "set-mfa-code",
+                    payload: event.target.value,
+                  })
                 }
               />
             </CCol>
@@ -73,4 +107,4 @@ function ProfileList(): JSX.Element {
   )
 }
 
-export default ProfileList
+export default Launcher
