@@ -3,6 +3,8 @@ import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
 import { getConfig } from "./awsConfig"
+import { createReducer, reducer } from "./appState"
+const [state, dispatch] = createReducer({}, reducer)
 
 function createWindow(): void {
   // Create the browser window.
@@ -17,6 +19,7 @@ function createWindow(): void {
       sandbox: false,
     },
   })
+  dispatch({ type: "main-window-created", payload: { window: mainWindow } })
 
   mainWindow.on("ready-to-show", () => {
     mainWindow.show()
