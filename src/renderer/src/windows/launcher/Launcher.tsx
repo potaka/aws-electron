@@ -4,7 +4,7 @@ import { CCol, CContainer, CFormInput, CRow } from "@coreui/react"
 import { useEffect, useReducer } from "react"
 import { Config, ConfigSchema } from "models"
 import ProfileRow from "../..//components/ProfileRow"
-const { ipcRenderer } = window.electron
+const { api } = window
 
 interface LauncherState {
   config?: Config
@@ -21,7 +21,7 @@ interface SetMfaCode {
   payload: string
 }
 
-type LauncherEvent = SetConfig | SetMfaCode
+export type LauncherEvent = SetConfig | SetMfaCode
 
 function dispatcher(state: LauncherState, event: LauncherEvent): LauncherState {
   switch (event.type) {
@@ -32,18 +32,22 @@ function dispatcher(state: LauncherState, event: LauncherEvent): LauncherState {
   }
 }
 
+function _setConfig(dispatch: React.Dispatch<LauncherEvent>): {
+  (config: unknown): void
+} {
+  return (config: unknown) =>
+    dispatch({ type: "set-config", payload: ConfigSchema.parse(config) })
+}
+
 function Launcher(): JSX.Element {
   const [{ config, mfaCode }, dispatch] = useReducer(dispatcher, {})
+  const setConfig = _setConfig(dispatch)
 
-  ipcRenderer.on("new-config", (_event, config: Config) => {
-    dispatch({ type: "set-config", payload: ConfigSchema.parse(config) })
-  })
+  useEffect(() => api.registerConfigChangeListener(setConfig), [])
 
   useEffect(() => {
     if (!config) {
-      window.electron.ipcRenderer.invoke("getConfig").then((result) => {
-        dispatch({ type: "set-config", payload: ConfigSchema.parse(result) })
-      })
+      api.getConfig().then(setConfig)
     }
   }, [config])
 
