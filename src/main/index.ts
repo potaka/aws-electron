@@ -1,11 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron"
+import { app, shell, BrowserWindow, ipcMain, Menu } from "electron"
 import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
 import { getConfig, watchConfigFile } from "./awsConfig"
-import { createReducer, reducer } from "./appState"
+import { createReducer, initialState, reducer } from "./appState"
 import { Config } from "models"
-const [state, dispatch] = createReducer({}, reducer)
+import buildAppMenu from "./menu"
+
+const [state, dispatch] = createReducer(reducer, initialState)
 
 function createWindow(): void {
   // Create the browser window.
@@ -13,7 +15,6 @@ function createWindow(): void {
     width: 900,
     height: 670,
     show: false,
-    autoHideMenuBar: true,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
@@ -56,6 +57,8 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle("getConfig", () => getConfig())
+
+  Menu.setApplicationMenu(buildAppMenu(dispatch));
 
   createWindow()
 
