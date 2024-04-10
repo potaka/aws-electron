@@ -35,13 +35,13 @@ export type MainEvent =
 
 interface WindowDetails {
   // TODO how much of this is fluff?
-  window: BrowserWindow
-  boundsChangedHandlerBound?: boolean
-  zoomHandlerBound?: boolean
   browserViews: Record<string, BrowserView>
   currentView?: string
-  expiryTime: number
-  titleUpdateTimer?: NodeJS.Timeout
+  window: BrowserWindow
+  // boundsChangedHandlerBound?: boolean
+  // zoomHandlerBound?: boolean
+  // expiryTime: number
+  // titleUpdateTimer?: NodeJS.Timeout
 }
 
 export interface MainState {

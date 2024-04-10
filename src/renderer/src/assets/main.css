@@ -4,7 +4,7 @@ body {
   overflow-x: clip;
 }
 
-code {
+/* code {
   font-weight: 600;
   padding: 3px 5px;
   border-radius: 2px;
@@ -18,7 +18,7 @@ code {
     Liberation Mono,
     monospace;
   font-size: 85%;
-}
+} */
 
 .container-fluid {
   padding-right: 0;
@@ -32,12 +32,12 @@ code {
   margin-bottom: 80px;
 } */
 
-.tip {
+/* .tip {
   font-size: 16px;
   line-height: 24px;
   color: var(--ev-c-text-2);
   font-weight: 600;
-}
+} */
 
 .heading {
   font-weight: bolder;

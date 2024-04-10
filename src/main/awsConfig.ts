@@ -113,8 +113,6 @@ function isMultiStageRoleAssumingProfile({
 export async function getConfig({
   configPath = path.join(os.homedir(), ".aws"),
 }: GetConfigArgs = {}): Promise<Config> {
-  console.log(`getting config from ${configPath}`)
-
   const profiles = await getProfiles({ configPath })
   const { credentialProfiles, longTermCredentialProfiles } =
     await getCredentials({ configPath })
