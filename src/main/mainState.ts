@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto"
-import { BrowserView, BrowserWindow } from "electron"
+import { BrowserView, BrowserWindow, ipcMain } from "electron"
 
-type MainWindowCreated = {
-  type: "main-window-created"
+type LauncherWindowCreated = {
+  type: "launcher-window-created"
   payload: { window: Electron.BrowserWindow }
 }
 
@@ -26,8 +26,8 @@ type ReloadWindow = {
   }
 }
 
-export type AppEvent =
-  | MainWindowCreated
+export type MainEvent =
+  | LauncherWindowCreated
   | OpenPreferences
   | OpenKeyRotation
   | OpenMfaCache
@@ -44,14 +44,14 @@ interface WindowDetails {
   titleUpdateTimer?: NodeJS.Timeout
 }
 
-export interface AppState {
+export interface MainState {
   mainWindow?: Electron.BrowserWindow
   windows: Record<string, WindowDetails>
 }
 
-export function reducer(state: AppState, event: AppEvent): AppState {
+export function reducer(state: MainState, event: MainEvent): MainState {
   switch (event.type) {
-    case "main-window-created":
+    case "launcher-window-created":
       return { mainWindow: event.payload.window, ...state }
     case "open-key-rotation":
       console.log("Intent to open Key Rotation window")
@@ -60,7 +60,7 @@ export function reducer(state: AppState, event: AppEvent): AppState {
       console.log("Intent to open Preferences window")
       break
     case "open-mfa-cache":
-      console.log("Intent to open MFA Cache window")
+      ipcMain.emit("openMfaCache")
       break
     case "reload-window": {
       const { window, force } = event.payload
@@ -89,7 +89,7 @@ export function reducer(state: AppState, event: AppEvent): AppState {
   return state
 }
 
-export function initialState(): AppState {
+export function initialState(): MainState {
   return {
     windows: {},
   }

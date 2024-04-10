@@ -3,7 +3,7 @@ import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
 import { getConfig, watchConfigFile } from "./awsConfig"
-import { createReducer, initialState, reducer } from "./appState"
+import { createReducer, initialState, reducer } from "./mainState"
 import { Config } from "models"
 import buildAppMenu from "./menu"
 
@@ -11,7 +11,7 @@ const [state, dispatch] = createReducer(reducer, initialState)
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  const launcherWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -21,14 +21,17 @@ function createWindow(): void {
       sandbox: true,
     },
   })
-  dispatch({ type: "main-window-created", payload: { window: mainWindow } })
+  dispatch({
+    type: "launcher-window-created",
+    payload: { window: launcherWindow },
+  })
 
-  mainWindow.on("ready-to-show", () => {
-    mainWindow.show()
+  launcherWindow.on("ready-to-show", () => {
+    launcherWindow.show()
     // mainWindow.webContents.openDevTools();
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  launcherWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: "deny" }
   })
@@ -36,9 +39,9 @@ function createWindow(): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"])
+    launcherWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/launcher`)
   } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"))
+    launcherWindow.loadFile(join(__dirname, "../renderer/launcher.html"))
   }
 }
 

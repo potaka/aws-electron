@@ -1,10 +1,10 @@
 import { Menu, app } from "electron"
-import { AppEvent } from "./appState"
+import { MainEvent } from "./mainState"
 
 const isMac = process.platform === "darwin"
 
 export default function buildAppMenu(dispatch: {
-  (event: AppEvent): void
+  (event: MainEvent): void
 }): Menu {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
