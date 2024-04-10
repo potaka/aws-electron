@@ -101,7 +101,7 @@ app.whenReady().then(() => {
     createMfaCacheWindow()
   })
 
-  Menu.setApplicationMenu(buildAppMenu(dispatch));
+  Menu.setApplicationMenu(buildAppMenu(dispatch))
 
   createLauncherWindow()
 
