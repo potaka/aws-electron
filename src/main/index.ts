@@ -9,7 +9,7 @@ import buildAppMenu from "./menu"
 
 const [state, dispatch] = createReducer(reducer, initialState)
 
-function createWindow(): void {
+function createLauncherWindow(): void {
   // Create the browser window.
   const launcherWindow = new BrowserWindow({
     width: 900,
@@ -45,6 +45,43 @@ function createWindow(): void {
   }
 }
 
+function createMfaCacheWindow(): void {
+  // Create the browser window.
+  const mfaCacheWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    ...(process.platform === "linux" ? { icon } : {}),
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: true,
+    },
+  })
+  // dispatch({
+  //   type: "mfa-cache-window-created",
+  //   payload: { window: mfaCacheWindow },
+  // })
+
+  mfaCacheWindow.on("ready-to-show", () => {
+    mfaCacheWindow.show()
+    // mainWindow.webContents.openDevTools();
+  })
+
+  mfaCacheWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: "deny" }
+  })
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    console.log(process.env["ELECTRON_RENDERER_URL"])
+    mfaCacheWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/mfaCache`)
+  } else {
+    mfaCacheWindow.loadFile(join(__dirname, "../renderer/mfaCache.html"))
+  }
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -60,10 +97,13 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle("getConfig", () => getConfig())
+  ipcMain.on("openMfaCache", () => {
+    createMfaCacheWindow()
+  })
 
   Menu.setApplicationMenu(buildAppMenu(dispatch));
 
-  createWindow()
+  createLauncherWindow()
 
   watchConfigFile((newConfig: Config) =>
     state.mainWindow!.webContents.send("new-config", newConfig),
@@ -72,7 +112,7 @@ app.whenReady().then(() => {
   app.on("activate", function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) createLauncherWindow()
   })
 })
 

@@ -14,6 +14,7 @@ export default defineConfig({
       rollupOptions: {
         input: {
           launcher: resolve(__dirname, "src/renderer/launcher.html"),
+          mfaCache: resolve(__dirname, "src/renderer/mfaCache.html"),
         },
       },
     },
