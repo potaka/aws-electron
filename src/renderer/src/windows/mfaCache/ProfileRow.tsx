@@ -6,50 +6,35 @@ interface ProfileRowProps {
   profile: Profile
 }
 
-function getRoleAccount(roleArn: string | undefined): string | undefined {
-  const match = roleArn?.match(/.*:(\d{12}):role.*/)
-  if (match) {
-    return match[1]
-  }
-  return roleArn
+interface MfaDetail {
+  account: string
+  arn: string
 }
 
-function getRoleName(roleArn: string | undefined): string | undefined {
-  return roleArn?.replace(/.*role\//, "")
-}
-
-function getMfaDetail(mfaSerial: string | undefined): string | undefined {
-  const match = mfaSerial?.match(/.*::(\d{12}):mfa\/(.*)/)
-  if (match) {
-    return [match[1], match[2]].join(" ")
-  }
-  return mfaSerial
+function getMfaDetail(mfaSerial: string): MfaDetail {
+  const match = mfaSerial.match(/.*::(\d{12}):mfa\/(.*)/)!
+  return { account: match[1], arn: match[2] }
 }
 
 function ProfileRow({
   profileName,
-  profile: { mfa_serial, role_arn, source_profile },
+  profile: { mfa_serial },
 }: ProfileRowProps): JSX.Element {
+  const { account, arn } = getMfaDetail(mfa_serial!)
   return (
     <>
       <CRow key={profileName} className="profile" xs={{ gutter: 0 }}>
-        <CCol className="d-none d-sm-table-cell" sm={3} lg={2}>
+        <CCol className="d-sm-table-cell" xs={3}>
           {profileName}
         </CCol>
-        <CCol className="d-none d-md-table-cell" md={2}>
-          {getRoleAccount(role_arn)}
+        <CCol className="d-sm-table-cell" xs={2}>
+          {account}
         </CCol>
-        <CCol className="d-none d-md-table-cell" sm={3} lg={2}>
-          {getRoleName(role_arn)}
-        </CCol>
-        <CCol className="d-none d-lg-table-cell" lg={2}>
-          {getMfaDetail(mfa_serial)}
-        </CCol>
-        <CCol className="d-none d-md-table-cell" md={2}>
-          {source_profile}
+        <CCol className="d-sm-table-cell" xs={5}>
+          {arn}
         </CCol>
         <CCol xs={1} className="launchButton">
-          <CButton color="primary">Launch</CButton>
+          <CButton color="primary">Cache</CButton>
         </CCol>
       </CRow>
     </>

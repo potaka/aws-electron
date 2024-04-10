@@ -126,11 +126,30 @@ export async function getConfig({
         isMultiStageRoleAssumingProfile({ profiles, profileName }),
     )
     .map(([profileName]) => profileName)
+
+  const cachableProfiles = Object.entries(profiles)
+    .filter(([profileName, profile]) => {
+      if (profile.mfa_serial === undefined) {
+        return false
+      }
+      if (profile.role_arn !== undefined) {
+        return false
+      }
+      const shortTermCredentialsProfile = profile.source_profile || profileName
+      const longTermCredentialProfile = `${shortTermCredentialsProfile}::source-profile`
+      return (
+        longTermCredentialProfiles.includes(longTermCredentialProfile) ||
+        longTermCredentialProfiles.includes(shortTermCredentialsProfile)
+      )
+    })
+    .map(([profileName]) => profileName)
+
   return {
     profiles,
     credentialProfiles,
     longTermCredentialProfiles,
     usableProfiles,
+    cachableProfiles,
   }
 }
 

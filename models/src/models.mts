@@ -26,6 +26,7 @@ export const ConfigSchema = z.object({
   credentialProfiles: z.array(z.string()),
   longTermCredentialProfiles: z.array(z.string()),
   usableProfiles: z.array(z.string()),
+  cachableProfiles: z.array(z.string()),
 })
 
 export type Config = z.infer<typeof ConfigSchema>

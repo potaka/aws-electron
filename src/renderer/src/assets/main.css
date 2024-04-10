@@ -42,7 +42,7 @@ code {
 .heading {
   font-weight: bolder;
   min-height: 3rem;
-  position: fixed;
+  position: sticky;
   top: 0;
   width: 100%;
   background-color: white;
@@ -52,7 +52,7 @@ code {
   background-color: lightgray;
 }
 
-.profile.row {
+.profile {
   width: 100%;
   padding-bottom: 1px;
 }
@@ -61,9 +61,6 @@ code {
 margin-left: 5px;
 }
 
-.profile:nth-child(2) {
-  padding-top: 3rem;
-}
 
 .mfaBox {
   position: sticky;
