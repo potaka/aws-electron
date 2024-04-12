@@ -6,6 +6,7 @@ import { getConfig, watchConfigFile } from "./awsConfig"
 import { createReducer, initialState, reducer } from "./mainState"
 import { Config } from "models"
 import buildAppMenu from "./menu"
+import { getConsoleUrl } from "./getConsoleURL"
 
 const [state, dispatch] = createReducer(reducer, initialState)
 
@@ -100,6 +101,14 @@ app.whenReady().then(() => {
   ipcMain.on("openMfaCache", () => {
     createMfaCacheWindow()
   })
+  ipcMain.on(
+    "launchConsole",
+    async (_, profileName: string, mfaCode: string) => {
+      console.log(
+        `url: ${await getConsoleUrl(await getConfig(), mfaCode, profileName)}`,
+      )
+    },
+  )
 
   Menu.setApplicationMenu(buildAppMenu(dispatch))
 

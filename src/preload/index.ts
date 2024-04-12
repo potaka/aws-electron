@@ -9,6 +9,9 @@ const api = {
   getConfig: async (): Promise<unknown> => {
     return ipcRenderer.invoke("getConfig")
   },
+  launchConsole: (profileName: string, mfaCode: string): void => {
+    ipcRenderer.send("launchConsole", profileName, mfaCode)
+  },
 }
 
 contextBridge.exposeInMainWorld("api", api)

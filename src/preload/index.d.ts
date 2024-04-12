@@ -6,6 +6,7 @@ declare global {
     api: {
       registerConfigChangeListener: { (payload: unknown): void }
       getConfig: { (): Promise<unknown> }
+      launchConsole: { (profileName: string, mfaCode: string): void }
     }
   }
 }

@@ -18,6 +18,9 @@ interface SetMfaCode {
   payload: string
 }
 
+interface LaunchConsole {
+  type: "launch-console"
+}
 
 export type RendererEvent = SetConfig | SetMfaCode | LaunchConsole
 type RendererState = HasOptionalConfig & HasMfaCode
@@ -31,6 +34,8 @@ export function dispatcher(
       return { ...state, config: event.payload }
     case "set-mfa-code":
       return { ...state, mfaCode: event.payload }
+    case "launch-console":
+      return { ...state, mfaCode: "" }
   }
 }
 

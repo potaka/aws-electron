@@ -43,6 +43,10 @@ function Launcher(): JSX.Element {
                 key={profileName}
                 profileName={profileName}
                 profile={profile}
+                launchAction={() => {
+                  api.launchConsole(profileName, mfaCode)
+                  dispatch({ type: "launch-console" })
+                }}
               />
             ))}
         {config &&

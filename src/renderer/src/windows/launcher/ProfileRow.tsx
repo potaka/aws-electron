@@ -4,6 +4,7 @@ import { Profile } from "models"
 interface ProfileRowProps {
   profileName: string
   profile: Profile
+  launchAction: { (): void }
 }
 
 function getRoleAccount(roleArn: string | undefined): string | undefined {
@@ -29,6 +30,7 @@ function getMfaDetail(mfaSerial: string | undefined): string | undefined {
 function ProfileRow({
   profileName,
   profile: { mfa_serial, role_arn, source_profile },
+  launchAction,
 }: ProfileRowProps): JSX.Element {
   return (
     <>
@@ -49,7 +51,9 @@ function ProfileRow({
           {source_profile}
         </CCol>
         <CCol xs={1} className="launchButton">
-          <CButton color="primary">Launch</CButton>
+          <CButton color="primary" onClick={launchAction}>
+            Launch
+          </CButton>
         </CCol>
       </CRow>
     </>
