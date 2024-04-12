@@ -4,12 +4,8 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      registerConfigChangeListener: {
-        (payload: unknown): void
-      }
-      getConfig: {
-        (): Promise<unknown>
-      }
+      registerConfigChangeListener: { (payload: unknown): void }
+      getConfig: { (): Promise<unknown> }
     }
   }
 }
