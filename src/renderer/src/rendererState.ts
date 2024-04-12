@@ -8,9 +8,6 @@ interface HasMfaCode {
   mfaCode: string
 }
 
-export type LauncherState = HasOptionalConfig & HasMfaCode
-export type MfaCacheState = HasOptionalConfig & HasMfaCode
-
 interface SetConfig {
   type: "set-config"
   payload: Config
@@ -21,21 +18,9 @@ interface SetMfaCode {
   payload: string
 }
 
-export type LauncherEvent = SetConfig | SetMfaCode
-export type MfaCacheEvent = SetConfig | SetMfaCode
 
-export type RendererEvent = LauncherEvent | MfaCacheEvent
-type RendererState = LauncherState | MfaCacheState
-
-export function dispatcher(
-  state: LauncherState,
-  event: LauncherEvent,
-): LauncherState
-
-export function dispatcher(
-  state: MfaCacheState,
-  event: MfaCacheEvent,
-): MfaCacheState
+export type RendererEvent = SetConfig | SetMfaCode | LaunchConsole
+type RendererState = HasOptionalConfig & HasMfaCode
 
 export function dispatcher(
   state: RendererState,
