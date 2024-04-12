@@ -5,6 +5,7 @@ export const ProfileSchema = z
     role_arn: z.string().optional(),
     mfa_serial: z.string().optional(),
     source_profile: z.string().optional(),
+    region: z.string().optional(),
     order: z.number().optional(),
   })
   .passthrough()
