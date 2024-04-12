@@ -147,7 +147,7 @@ export async function getConsoleUrl(
   const signinToken = await getSigninToken(roleCredentials)
 
   let consoleUrl: string = defaultConsoleUrl
-  const { region } = config[profileName]
+  const { region } = config.profiles[profileName]
   if (region && region !== "us-east-1") {
     consoleUrl = getConsoleUrlForRegion(region)
   }
