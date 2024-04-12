@@ -30,3 +30,7 @@ export const ConfigSchema = z.object({
 })
 
 export type Config = z.infer<typeof ConfigSchema>
+
+export const SigninResultSchema = z.object({ SigninToken: z.string() })
+
+export type SigninResult = z.infer<typeof SigninResultSchema>

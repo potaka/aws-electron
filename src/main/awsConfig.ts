@@ -70,7 +70,7 @@ async function getCredentials({
   }
 }
 
-function getProfileList(
+export function getProfileList(
   config: Record<string, Profile>,
   profileName: string,
 ): Array<string> {
