@@ -76,51 +76,61 @@ function createMfaCacheWindow(): void {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    console.log(process.env["ELECTRON_RENDERER_URL"])
     mfaCacheWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/mfaCache`)
   } else {
     mfaCacheWindow.loadFile(join(__dirname, "../renderer/mfaCache.html"))
   }
 }
 
-function createTabsWindow(profileName: string, url: string): BrowserWindow {
+function launchProfile(profileName: string, url: string): BrowserWindow {
   // Create the browser window.
-  const tabsWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    ...(process.platform === "linux" ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
-      sandbox: true,
-    },
-  })
-  // dispatch({
-  //   type: "mfa-cache-window-created",
-  //   payload: { window: mfaCacheWindow },
-  // })
+  const { windows } = state
+  const windowDetails = windows[profileName]
 
-  tabsWindow.on("ready-to-show", () => {
-    tabsWindow.show()
-    tabsWindow.webContents.send("set-profile-name", profileName)
-    tabsWindow.webContents.send("open-tab", url)
-    // mainWindow.webContents.openDevTools();
-  })
+  const tabsWindow =
+    windowDetails?.window ||
+    new BrowserWindow({
+      width: 900,
+      height: 670,
+      show: false,
+      ...(process.platform === "linux" ? { icon } : {}),
+      webPreferences: {
+        preload: join(__dirname, "../preload/index.js"),
+        sandbox: true,
+        partition: ["persist", profileName].join(":"),
+      },
+    })
 
-  tabsWindow.webContents.setWindowOpenHandler((details) => {
-    // TODO launch new tab
-    shell.openExternal(details.url)
-    return { action: "deny" }
-  })
+  if (!windowDetails) {
+    dispatch({
+      type: "open-window",
+      payload: { profileName, window: tabsWindow },
+    })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    console.log(process.env["ELECTRON_RENDERER_URL"])
-    tabsWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/tabs`)
-  } else {
-    tabsWindow.loadFile(join(__dirname, "../renderer/tabs.html"))
+    tabsWindow.on("ready-to-show", () => {
+      tabsWindow.show()
+      tabsWindow.webContents.openDevTools()
+      tabsWindow.webContents.send("set-profile-name", profileName)
+      tabsWindow.webContents.send("open-tab", url)
+      dispatch({ type: "add-tab", payload: { profileName, url } })
+    })
+
+    tabsWindow.webContents.setWindowOpenHandler((details) => {
+      tabsWindow.webContents.send("open-tab", details.url)
+      dispatch({ type: "add-tab", payload: { profileName, url } })
+      return { action: "deny" }
+    })
+
+    // HMR for renderer base on electron-vite cli.
+    // Load the remote URL for development or the local html file for production.
+    if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+      tabsWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/tabs`)
+    } else {
+      tabsWindow.loadFile(join(__dirname, "../renderer/tabs.html"))
+    }
   }
+  tabsWindow.webContents.send("open-tab", url)
+  dispatch({ type: "add-tab", payload: { profileName, url } })
   return tabsWindow
 }
 
@@ -146,9 +156,12 @@ app.whenReady().then(() => {
     "launchConsole",
     async (_, profileName: string, mfaCode: string) => {
       const url = await getConsoleUrl(await getConfig(), mfaCode, profileName)
-      createTabsWindow(profileName, url)
+      launchProfile(profileName, url)
     },
   )
+  ipcMain.on("setTop", (_, profileName: string, top: number): void => {
+    dispatch({ type: "set-top", payload: { profileName, top } })
+  })
 
   Menu.setApplicationMenu(buildAppMenu(dispatch))
 

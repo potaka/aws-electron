@@ -1,28 +1,52 @@
 import { randomUUID } from "crypto"
-import { BrowserView, BrowserWindow, ipcMain } from "electron"
+import { WebContentsView, BrowserWindow, ipcMain } from "electron"
 
-type LauncherWindowCreated = {
+interface LauncherWindowCreated {
   type: "launcher-window-created"
   payload: { window: Electron.BrowserWindow }
 }
 
-type OpenPreferences = {
+interface OpenPreferences {
   type: "open-preferences"
 }
 
-type OpenKeyRotation = {
+interface OpenKeyRotation {
   type: "open-key-rotation"
 }
 
-type OpenMfaCache = {
+interface OpenMfaCache {
   type: "open-mfa-cache"
 }
 
-type ReloadWindow = {
+interface ReloadWindow {
   type: "reload-window"
   payload: {
     window?: BrowserWindow
     force: boolean
+  }
+}
+
+interface OpenWindow {
+  type: "open-window"
+  payload: {
+    profileName: string
+    window: BrowserWindow
+  }
+}
+
+interface AddTab {
+  type: "add-tab"
+  payload: {
+    profileName: string
+    url: string
+  }
+}
+
+interface SetTop {
+  type: "set-top"
+  payload: {
+    profileName: string
+    top: number
   }
 }
 
@@ -32,12 +56,17 @@ export type MainEvent =
   | OpenKeyRotation
   | OpenMfaCache
   | ReloadWindow
+  | OpenWindow
+  | AddTab
+  | SetTop
 
 interface WindowDetails {
   // TODO how much of this is fluff?
-  browserViews: Record<string, BrowserView>
-  currentView?: string
+  // browserViews: Record<string, WebContentsView>
+  // currentView?: string
   window: BrowserWindow
+  tabs: WebContentsView[]
+  top: number
   // boundsChangedHandlerBound?: boolean
   // zoomHandlerBound?: boolean
   // expiryTime: number
@@ -52,7 +81,7 @@ export interface MainState {
 export function reducer(state: MainState, event: MainEvent): MainState {
   switch (event.type) {
     case "launcher-window-created":
-      return { mainWindow: event.payload.window, ...state }
+      return { ...state, mainWindow: event.payload.window }
     case "open-key-rotation":
       console.log("Intent to open Key Rotation window")
       break
@@ -63,7 +92,7 @@ export function reducer(state: MainState, event: MainEvent): MainState {
       ipcMain.emit("openMfaCache")
       break
     case "reload-window": {
-      const { window, force } = event.payload
+      const { window /*force*/ } = event.payload
       if (!window) {
         break
       }
@@ -74,15 +103,81 @@ export function reducer(state: MainState, event: MainEvent): MainState {
       if (!currentProfileName) {
         break
       }
-      const { browserViews, currentView } = windows[currentProfileName]
-      if (!currentView) {
-        break
+      // const { browserViews, currentView } = windows[currentProfileName]
+      // if (!currentView) {
+      //   break
+      // }
+      // const { webContents } = browserViews[currentView]
+      // if (force) {
+      //   webContents.reloadIgnoringCache()
+      // } else {
+      //   webContents.reload()
+      // }
+      break
+    }
+    case "open-window": {
+      const { windows } = state
+      const { profileName, window } = event.payload
+      const windowDetails: WindowDetails = {
+        window,
+        // browserViews: {},
+        tabs: [],
+        top: 0,
       }
-      const { webContents } = browserViews[currentView]
-      if (force) {
-        webContents.reloadIgnoringCache()
-      } else {
-        webContents.reload()
+      return {
+        ...state,
+        windows: {
+          ...windows,
+          [profileName]: windowDetails,
+        },
+      }
+    }
+    case "add-tab": {
+      const { windows } = state
+      const { profileName, url } = event.payload
+      const windowDetails = windows[profileName]
+      const { window, tabs } = windowDetails
+
+      const view = new WebContentsView({
+        webPreferences: {
+          partition: ["persist", profileName].join(":"),
+        },
+      })
+
+      view.webContents.loadURL(url)
+      window.contentView.children.forEach((view) => view.setVisible(false))
+      window.contentView.addChildView(view)
+      view.setVisible(true)
+      return {
+        ...state,
+        windows: {
+          ...windows,
+          [profileName]: {
+            ...windowDetails,
+            tabs: [...tabs, view],
+          },
+        },
+      }
+    }
+    case "set-top": {
+      const { windows } = state
+      const { profileName, top } = event.payload
+      const windowDetails = windows[profileName]
+      const { window } = windowDetails
+      window.contentView.children.forEach((view) => {
+        const bounds = { ...window.getContentBounds(), x: 0, y: top }
+        bounds.height = bounds.height - top
+        view.setBounds(bounds)
+      })
+      return {
+        ...state,
+        windows: {
+          ...windows,
+          [profileName]: {
+            ...windowDetails,
+            top,
+          },
+        },
       }
     }
   }

@@ -24,15 +24,18 @@ function Tabs(): JSX.Element {
     [],
   )
 
-  useEffect(() =>
-    api.registerNewTabListener((url: string): void =>
-      dispatch({ type: "open-tab", payload: url }),
-    ),
+  useEffect(
+    () =>
+      api.registerNewTabListener((url: string): void =>
+        dispatch({ type: "open-tab", payload: url }),
+      ),
+    [],
   )
 
   useEffect(() => {
     if (profileName) {
       document.title = profileName
+      api.setTop(profileName, document.getElementById("tabPanel")!.offsetTop)
     }
   }, [profileName])
 
@@ -76,7 +79,7 @@ function Tabs(): JSX.Element {
           ))}
       </CNav>
       <CTabContent>
-        <CTabPane role="tabpanel" visible={true}>
+        <CTabPane role="tabpanel" visible={true} id="tabPanel">
           {profileName}
         </CTabPane>
       </CTabContent>

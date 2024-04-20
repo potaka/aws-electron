@@ -11,9 +11,10 @@ declare global {
         (callback: { (profileName: string): void }): { (): void }
       }
       registerNewTabListener: {
-        (callbadck: { (url: string): void }): { (): void }
+        (callback: { (url: string): void }): { (): void }
       }
       getConfig: { (): Promise<unknown> }
+      setTop: { (profileName: string, top: number): void }
       launchConsole: { (profileName: string, mfaCode: string): void }
     }
   }
