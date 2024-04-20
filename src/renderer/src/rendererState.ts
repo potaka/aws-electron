@@ -8,6 +8,12 @@ interface HasMfaCode {
   mfaCode: string
 }
 
+interface HasOptionalTabs {
+  tabs?: string[]
+  activeTab?: number
+  profileName?: string
+}
+
 interface SetConfig {
   type: "set-config"
   payload: Config
@@ -22,8 +28,29 @@ interface LaunchConsole {
   type: "launch-console"
 }
 
-export type RendererEvent = SetConfig | SetMfaCode | LaunchConsole
-type RendererState = HasOptionalConfig & HasMfaCode
+interface SetActiveTab {
+  type: "set-active-tab"
+  payload: number
+}
+
+interface SetProfileName {
+  type: "set-profile-name"
+  payload: string
+}
+
+interface OpenTab {
+  type: "open-tab"
+  payload: string
+}
+
+export type RendererEvent =
+  | SetConfig
+  | SetMfaCode
+  | LaunchConsole
+  | SetActiveTab
+  | SetProfileName
+  | OpenTab
+type RendererState = HasOptionalConfig & HasMfaCode & HasOptionalTabs
 
 export function dispatcher(
   state: RendererState,
@@ -36,6 +63,12 @@ export function dispatcher(
       return { ...state, mfaCode: event.payload }
     case "launch-console":
       return { ...state, mfaCode: "" }
+    case "set-active-tab":
+      return { ...state, activeTab: event.payload }
+    case "set-profile-name":
+      return { ...state, profileName: event.payload }
+    case "open-tab":
+      return { ...state, tabs: [...(state.tabs || []), event.payload] }
   }
 }
 
@@ -47,7 +80,5 @@ export function setConfig(dispatch: React.Dispatch<RendererEvent>): {
 }
 
 export function initialState(): HasMfaCode {
-  return {
-    mfaCode: "",
-  }
+  return { mfaCode: "" }
 }

@@ -83,6 +83,47 @@ function createMfaCacheWindow(): void {
   }
 }
 
+function createTabsWindow(profileName: string, url: string): BrowserWindow {
+  // Create the browser window.
+  const tabsWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    ...(process.platform === "linux" ? { icon } : {}),
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: true,
+    },
+  })
+  // dispatch({
+  //   type: "mfa-cache-window-created",
+  //   payload: { window: mfaCacheWindow },
+  // })
+
+  tabsWindow.on("ready-to-show", () => {
+    tabsWindow.show()
+    tabsWindow.webContents.send("set-profile-name", profileName)
+    tabsWindow.webContents.send("open-tab", url)
+    // mainWindow.webContents.openDevTools();
+  })
+
+  tabsWindow.webContents.setWindowOpenHandler((details) => {
+    // TODO launch new tab
+    shell.openExternal(details.url)
+    return { action: "deny" }
+  })
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    console.log(process.env["ELECTRON_RENDERER_URL"])
+    tabsWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/tabs`)
+  } else {
+    tabsWindow.loadFile(join(__dirname, "../renderer/tabs.html"))
+  }
+  return tabsWindow
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -104,9 +145,8 @@ app.whenReady().then(() => {
   ipcMain.on(
     "launchConsole",
     async (_, profileName: string, mfaCode: string) => {
-      console.log(
-        `url: ${await getConsoleUrl(await getConfig(), mfaCode, profileName)}`,
-      )
+      const url = await getConsoleUrl(await getConfig(), mfaCode, profileName)
+      createTabsWindow(profileName, url)
     },
   )
 
