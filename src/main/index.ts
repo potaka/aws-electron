@@ -137,6 +137,8 @@ async function launchConsole(
       tabsWindow.webContents.send("open-tab", url)
     })
 
+    tabsWindow.on("close", () => {
+      dispatch({ type: "close-window", payload: profileName })
     })
 
     tabsWindow.webContents.on(
@@ -160,6 +162,15 @@ function setTop(profileName: string, top: number): void {
   })
 
   dispatch({ type: "set-top", payload: { profileName, top: computedTop } })
+}
+
+function closeTab(profileName: string, index: number): void {
+  const { window, tabs } = state.windows[profileName]
+  window.contentView.removeChildView(tabs[index])
+
+  const activeTab = Math.min(index, tabs.length - 2)
+  dispatch({ type: "close-tab", payload: { profileName, index, activeTab } })
+  activateTab(profileName, activeTab)
 }
 
 function reloadWindow(window: BrowserWindow, force: boolean): void {
@@ -242,6 +253,10 @@ app.whenReady().then(() => {
 
   ipcMain.on("setTop", (_, profileName: string, top: number): void =>
     setTop(profileName, top),
+  )
+
+  ipcMain.on("closeTab", (_, profileName: string, index: number): void =>
+    closeTab(profileName, index),
   )
 
   ipcMain.on("reloadWindow", (_, window: BrowserWindow, force: boolean): void =>

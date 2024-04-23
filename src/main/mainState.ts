@@ -35,12 +35,22 @@ interface SetTop {
   }
 }
 
+interface CloseTab {
+  type: "close-tab"
+  payload: {
+    profileName: string
+    index: number
+    activeTab: number
+  }
+}
+
 export type MainEvent =
   | LauncherWindowCreated
   | OpenWindow
   | CloseWindow
   | AddTab
   | SetTop
+  | CloseTab
 
 interface WindowDetails {
   // TODO how much of this is fluff?
@@ -135,6 +145,31 @@ export function reducer(state: MainState, event: MainEvent): MainState {
             top,
           },
         },
+      }
+    }
+    case "close-tab": {
+      const { windows } = state
+      const { profileName, index, activeTab } = event.payload
+
+      return {
+        ...state,
+        windows: Object.entries(windows).reduce(
+          (windows: Record<string, WindowDetails>, [name, details]) => {
+            if (profileName === name) {
+              const { tabs } = details
+              return {
+                ...windows,
+                [profileName]: {
+                  ...details,
+                  activeTab,
+                  tabs: tabs.filter((_, tabIndex) => tabIndex !== index),
+                },
+              }
+            }
+            return { ...windows, [profileName]: details }
+          },
+          {},
+        ),
       }
     }
   }
