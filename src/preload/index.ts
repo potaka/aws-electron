@@ -22,6 +22,8 @@ const api = {
     ),
   registerNewTabListener: (callback: { (url: string): void }): { (): void } =>
     registerLIstener("open-tab", (_, url: string): void => callback(url)),
+  closeTab: (profileName: string, index: number): void =>
+    ipcRenderer.send("closeTab", profileName, index),
   setTop: (profileName: string, top: number): void =>
     ipcRenderer.send("setTop", profileName, top),
   getConfig: async (): Promise<unknown> => ipcRenderer.invoke("getConfig"),

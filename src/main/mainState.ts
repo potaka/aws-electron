@@ -14,6 +14,11 @@ interface OpenWindow {
   }
 }
 
+interface CloseWindow {
+  type: "close-window"
+  payload: string
+}
+
 interface AddTab {
   type: "add-tab"
   payload: {
@@ -33,6 +38,7 @@ interface SetTop {
 export type MainEvent =
   | LauncherWindowCreated
   | OpenWindow
+  | CloseWindow
   | AddTab
   | SetTop
 
@@ -79,6 +85,25 @@ export function reducer(state: MainState, event: MainEvent): MainState {
         },
       }
     }
+    case "close-window": {
+      const { windows } = state
+      return {
+        ...state,
+        windows: Object.entries(windows)
+          .filter(([profileName]) => profileName !== event.payload)
+          .reduce(
+            (
+              accumulator: Record<string, WindowDetails>,
+              [profileName, details],
+            ) => ({
+              ...accumulator,
+              [profileName]: details,
+            }),
+            {},
+          ),
+      }
+    }
+
     case "add-tab": {
       const { windows } = state
       const { profileName, url } = event.payload

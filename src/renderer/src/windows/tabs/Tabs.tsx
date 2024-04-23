@@ -1,6 +1,13 @@
 import "@coreui/coreui/dist/css/coreui.min.css"
 import "../../assets/main.css"
-import { CNav, CNavItem, CNavLink, CTabContent, CTabPane } from "@coreui/react"
+import {
+  CCloseButton,
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
+} from "@coreui/react"
 import { useEffect, useReducer } from "react"
 import {
   setConfig as _setConfig,
@@ -63,17 +70,22 @@ function Tabs(): JSX.Element {
           </CNavLink>
         </CNavItem>
         {tabs &&
-          tabs.map((_tab, index) => (
+          tabs.map((tab, index) => (
             <CNavItem key={index}>
-              <CNavLink
-                href="#!"
-                active={index === activeTab}
-                onClick={() => {
-                  dispatch({ type: "set-active-tab", payload: index })
-                  console.log(`Making tab ${index} active`)
-                }}
-              >
-                Tab {index}
+              <CNavLink href="#!" active={index === activeTab}>
+                <span
+                  onClick={() => {
+                    dispatch({ type: "set-active-tab", payload: index })
+                    api.activateTab(profileName!, index)
+                  }}
+                >
+                  {tab}
+                </span>
+                {index === activeTab && (
+                  <CCloseButton
+                    onClick={() => api.closeTab(profileName!, index)}
+                  />
+                )}
               </CNavLink>
             </CNavItem>
           ))}
