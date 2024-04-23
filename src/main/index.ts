@@ -117,6 +117,20 @@ async function launchConsole(
   }
   openTab(profileName, url)
   tabsWindow.webContents.send("open-tab", url)
+function setTop(profileName: string, top: number): void {
+  const { window } = state.windows[profileName]
+
+  const computedTop = parseInt((top * window.webContents.zoomFactor).toFixed(0))
+
+  window.contentView.children.forEach((view) => {
+    const bounds = { ...window.getContentBounds(), x: 0, y: computedTop }
+    bounds.height = bounds.height - computedTop
+    view.setBounds(bounds)
+  })
+
+  dispatch({ type: "set-top", payload: { profileName, top: computedTop } })
+}
+
 function reloadWindow(window: BrowserWindow, force: boolean): void {
   if (!window) {
     return
@@ -193,14 +207,15 @@ app.whenReady().then(() => {
     launchConsole(profileName, mfaCode),
   )
 
+  ipcMain.on("setTop", (_, profileName: string, top: number): void =>
+    setTop(profileName, top),
+  )
+
   ipcMain.on("reloadWindow", (_, window: BrowserWindow, force: boolean): void =>
     reloadWindow(window, force),
   )
 
   )
-  ipcMain.on("setTop", (_, profileName: string, top: number): void => {
-    dispatch({ type: "set-top", payload: { profileName, top } })
-  })
 
   Menu.setApplicationMenu(buildAppMenu())
 

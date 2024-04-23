@@ -58,13 +58,18 @@ export function reducer(state: MainState, event: MainEvent): MainState {
   switch (event.type) {
     case "launcher-window-created":
       return { ...state, mainWindow: event.payload.window }
+
     case "open-window": {
       const { windows } = state
       const { profileName, window } = event.payload
+      const computedTop = parseInt(
+        (42 * window.webContents.zoomFactor).toFixed(0),
+      )
       const windowDetails: WindowDetails = {
         window,
         tabs: [],
-        top: 0,
+        top: computedTop,
+        activeTab: 0,
       }
       return {
         ...state,
