@@ -74,7 +74,12 @@ function createMfaCacheWindow(): void {
   loadWindowContent(mfaCacheWindow, "mfaCache")
 }
 
-function launchProfile(profileName: string, url: string): BrowserWindow {
+async function launchConsole(
+  profileName: string,
+  mfaCode: string,
+): Promise<void> {
+  const url = await getConsoleUrl(await getConfig(), mfaCode, profileName)
+
   // Create the browser window.
   const { windows } = state
   const windowDetails = windows[profileName]
@@ -104,20 +109,14 @@ function launchProfile(profileName: string, url: string): BrowserWindow {
       tabsWindow.webContents.openDevTools()
       tabsWindow.webContents.send("set-profile-name", profileName)
       tabsWindow.webContents.send("open-tab", url)
-      dispatch({ type: "add-tab", payload: { profileName, url } })
     })
 
-    tabsWindow.webContents.setWindowOpenHandler((details) => {
-      tabsWindow.webContents.send("open-tab", details.url)
-      dispatch({ type: "add-tab", payload: { profileName, url } })
-      return { action: "deny" }
     })
 
     loadWindowContent(tabsWindow, "tabs")
   }
+  openTab(profileName, url)
   tabsWindow.webContents.send("open-tab", url)
-  dispatch({ type: "add-tab", payload: { profileName, url } })
-  return tabsWindow
 function reloadWindow(window: BrowserWindow, force: boolean): void {
   if (!window) {
     return
@@ -145,6 +144,32 @@ function reloadWindow(window: BrowserWindow, force: boolean): void {
   }
 }
 
+function openTab(profileName: string, url: string): void {
+  const { top, window, tabs } = state.windows[profileName]
+  const { contentView } = window
+
+  const view = new WebContentsView({
+    webPreferences: {
+      partition: ["persist", profileName].join(":"),
+    },
+  })
+
+  const bounds = { ...window.getContentBounds(), x: 0, y: top }
+  bounds.height = bounds.height - top
+  view.setBounds(bounds)
+
+  const { webContents: viewWebContents } = view
+  viewWebContents.loadURL(url)
+  contentView.children.forEach((view) => view.setVisible(false))
+  contentView.addChildView(view)
+
+  viewWebContents.setWindowOpenHandler(({ url }) => {
+    openTab(profileName, url)
+    return { action: "deny" }
+  })
+  dispatch({ type: "add-tab", payload: { profileName, tab: view } })
+
+  view.setVisible(true)
 }
 
 // This method will be called when Electron has finished
@@ -164,12 +189,10 @@ app.whenReady().then(() => {
   ipcMain.handle("getConfig", () => getConfig())
   ipcMain.on("openMfaCache", () => createMfaCacheWindow())
 
-  ipcMain.on(
-    "launchConsole",
-    async (_, profileName: string, mfaCode: string) => {
-      const url = await getConsoleUrl(await getConfig(), mfaCode, profileName)
-      launchProfile(profileName, url)
-    },
+  ipcMain.on("launchConsole", (_, profileName: string, mfaCode: string) =>
+    launchConsole(profileName, mfaCode),
+  )
+
   ipcMain.on("reloadWindow", (_, window: BrowserWindow, force: boolean): void =>
     reloadWindow(window, force),
   )
