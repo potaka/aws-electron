@@ -148,6 +148,22 @@ async function launchConsole(
       dispatch({ type: "close-window", payload: profileName })
     })
 
+    tabsWindow.on(
+      "resize",
+      debounce(() => {
+        tabsWindow.contentView.children.forEach((view) => {
+          const { top } = state.windows[profileName]
+          const bounds = {
+            ...tabsWindow.getContentBounds(),
+            x: 0,
+            y: parseInt((top * tabsWindow.webContents.zoomFactor).toFixed(0)),
+          }
+          bounds.height = bounds.height - top
+          view.setBounds(bounds)
+        })
+      }, 100),
+    )
+
     tabsWindow.webContents.on(
       "zoom-changed",
       zoomChange(tabsWindow, profileName),
@@ -157,6 +173,8 @@ async function launchConsole(
   }
   openTab(profileName, url)
   tabsWindow.webContents.send("open-tab", url)
+}
+
 function setTop(profileName: string, top: number): void {
   const { window } = state.windows[profileName]
 
