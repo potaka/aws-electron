@@ -141,9 +141,8 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle("getConfig", () => getConfig())
-  ipcMain.on("openMfaCache", () => {
-    createMfaCacheWindow()
-  })
+  ipcMain.on("openMfaCache", () => createMfaCacheWindow())
+
   ipcMain.on(
     "launchConsole",
     async (_, profileName: string, mfaCode: string) => {
@@ -155,7 +154,7 @@ app.whenReady().then(() => {
     dispatch({ type: "set-top", payload: { profileName, top } })
   })
 
-  Menu.setApplicationMenu(buildAppMenu(dispatch))
+  Menu.setApplicationMenu(buildAppMenu())
 
   createLauncherWindow()
 

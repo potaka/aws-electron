@@ -1,29 +1,9 @@
 import { randomUUID } from "crypto"
-import { WebContentsView, BrowserWindow, ipcMain } from "electron"
+import { WebContentsView, BrowserWindow } from "electron"
 
 interface LauncherWindowCreated {
   type: "launcher-window-created"
   payload: { window: Electron.BrowserWindow }
-}
-
-interface OpenPreferences {
-  type: "open-preferences"
-}
-
-interface OpenKeyRotation {
-  type: "open-key-rotation"
-}
-
-interface OpenMfaCache {
-  type: "open-mfa-cache"
-}
-
-interface ReloadWindow {
-  type: "reload-window"
-  payload: {
-    window?: BrowserWindow
-    force: boolean
-  }
 }
 
 interface OpenWindow {
@@ -52,10 +32,6 @@ interface SetTop {
 
 export type MainEvent =
   | LauncherWindowCreated
-  | OpenPreferences
-  | OpenKeyRotation
-  | OpenMfaCache
-  | ReloadWindow
   | OpenWindow
   | AddTab
   | SetTop
@@ -82,45 +58,11 @@ export function reducer(state: MainState, event: MainEvent): MainState {
   switch (event.type) {
     case "launcher-window-created":
       return { ...state, mainWindow: event.payload.window }
-    case "open-key-rotation":
-      console.log("Intent to open Key Rotation window")
-      break
-    case "open-preferences":
-      console.log("Intent to open Preferences window")
-      break
-    case "open-mfa-cache":
-      ipcMain.emit("openMfaCache")
-      break
-    case "reload-window": {
-      const { window /*force*/ } = event.payload
-      if (!window) {
-        break
-      }
-      const { windows } = state
-      const currentProfileName = Object.keys(windows).find(
-        (profileName) => window === windows[profileName].window,
-      )
-      if (!currentProfileName) {
-        break
-      }
-      // const { browserViews, currentView } = windows[currentProfileName]
-      // if (!currentView) {
-      //   break
-      // }
-      // const { webContents } = browserViews[currentView]
-      // if (force) {
-      //   webContents.reloadIgnoringCache()
-      // } else {
-      //   webContents.reload()
-      // }
-      break
-    }
     case "open-window": {
       const { windows } = state
       const { profileName, window } = event.payload
       const windowDetails: WindowDetails = {
         window,
-        // browserViews: {},
         tabs: [],
         top: 0,
       }
@@ -136,25 +78,16 @@ export function reducer(state: MainState, event: MainEvent): MainState {
       const { windows } = state
       const { profileName, url } = event.payload
       const windowDetails = windows[profileName]
-      const { window, tabs } = windowDetails
 
-      const view = new WebContentsView({
-        webPreferences: {
-          partition: ["persist", profileName].join(":"),
-        },
-      })
+      const { tabs } = windowDetails
 
-      view.webContents.loadURL(url)
-      window.contentView.children.forEach((view) => view.setVisible(false))
-      window.contentView.addChildView(view)
-      view.setVisible(true)
       return {
         ...state,
         windows: {
           ...windows,
           [profileName]: {
             ...windowDetails,
-            tabs: [...tabs, view],
+            tabs: [...tabs, tab],
           },
         },
       }
@@ -163,12 +96,6 @@ export function reducer(state: MainState, event: MainEvent): MainState {
       const { windows } = state
       const { profileName, top } = event.payload
       const windowDetails = windows[profileName]
-      const { window } = windowDetails
-      window.contentView.children.forEach((view) => {
-        const bounds = { ...window.getContentBounds(), x: 0, y: top }
-        bounds.height = bounds.height - top
-        view.setBounds(bounds)
-      })
       return {
         ...state,
         windows: {
@@ -181,7 +108,6 @@ export function reducer(state: MainState, event: MainEvent): MainState {
       }
     }
   }
-  return state
 }
 
 export function initialState(): MainState {

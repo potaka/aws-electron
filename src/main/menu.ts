@@ -1,26 +1,23 @@
-import { Menu, app } from "electron"
-import { MainEvent } from "./mainState"
+import { Menu, app, ipcMain } from "electron"
 
 const isMac = process.platform === "darwin"
 
-export default function buildAppMenu(dispatch: {
-  (event: MainEvent): void
-}): Menu {
+export default function buildAppMenu(): Menu {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
       label: isMac ? app.name : "AWS Console",
       submenu: [
         {
           label: "Preferences",
-          click: () => dispatch({ type: "open-preferences" }),
+          click: () => ipcMain.emit("open-preferences"),
         },
         {
           label: "Rotate Keys",
-          click: () => dispatch({ type: "open-key-rotation" }),
+          click: () => ipcMain.emit("open-key-rotation"),
         },
         {
           label: "MFA Cache",
-          click: () => dispatch({ type: "open-mfa-cache" }),
+          click: () => ipcMain.emit("openMfaCache"),
         },
         ...((isMac
           ? [
@@ -75,20 +72,16 @@ export default function buildAppMenu(dispatch: {
         {
           label: "Reload",
           accelerator: "CmdOrCtrl+R",
-          click: (_, browserWindow): void =>
-            dispatch({
-              type: "reload-window",
-              payload: { window: browserWindow, force: false },
-            }),
+          click: (_, browserWindow): void => {
+            ipcMain.emit("reloadWindow", undefined, browserWindow, false)
+          },
         },
         {
           label: "Force Reload",
           accelerator: "CmdOrCtrl+Shift+R",
-          click: (_, browserWindow): void =>
-            dispatch({
-              type: "reload-window",
-              payload: { window: browserWindow, force: true },
-            }),
+          click: (_, browserWindow): void => {
+            ipcMain.emit("reloadWindow", undefined, browserWindow, true)
+          },
         },
         { role: "toggleDevTools" },
         { type: "separator" },
