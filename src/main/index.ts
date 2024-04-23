@@ -257,6 +257,10 @@ function openTab(profileName: string, url: string): void {
 
   const { webContents: viewWebContents } = view
   viewWebContents.loadURL(url)
+  viewWebContents.addListener("page-title-updated", () => {
+    sendTabs(profileName)
+  })
+
   viewWebContents.addListener("zoom-changed", zoomChange(window, profileName))
 
   contentView.children.forEach((view) => view.setVisible(false))
