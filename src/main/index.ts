@@ -189,6 +189,13 @@ function setTop(profileName: string, top: number): void {
   dispatch({ type: "set-top", payload: { profileName, top: computedTop } })
 }
 
+function activateTab(profileName: string, index: number): void {
+  const { tabs } = state.windows[profileName]
+  tabs.forEach((tab, tabIndex) => tab.setVisible(tabIndex === index))
+  dispatch({ type: "activate-tab", payload: { profileName, index } })
+  sendTabs(profileName)
+}
+
 function closeTab(profileName: string, index: number): void {
   const { window, tabs } = state.windows[profileName]
   window.contentView.removeChildView(tabs[index])
@@ -288,6 +295,10 @@ app.whenReady().then(() => {
 
   ipcMain.on("setTop", (_, profileName: string, top: number): void =>
     setTop(profileName, top),
+  )
+
+  ipcMain.on("activateTab", (_, profileName: string, index: number): void =>
+    activateTab(profileName, index),
   )
 
   ipcMain.on("closeTab", (_, profileName: string, index: number): void =>

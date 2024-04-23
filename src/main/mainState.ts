@@ -23,7 +23,8 @@ interface AddTab {
   type: "add-tab"
   payload: {
     profileName: string
-    url: string
+    // url: string
+    tab: WebContentsView
   }
 }
 
@@ -35,6 +36,13 @@ interface SetTop {
   }
 }
 
+interface ActivateTab {
+  type: "activate-tab"
+  payload: {
+    profileName: string
+    index: number
+  }
+}
 interface CloseTab {
   type: "close-tab"
   payload: {
@@ -50,14 +58,14 @@ export type MainEvent =
   | CloseWindow
   | AddTab
   | SetTop
+  | ActivateTab
   | CloseTab
 
 interface WindowDetails {
   // TODO how much of this is fluff?
-  // browserViews: Record<string, WebContentsView>
-  // currentView?: string
   window: BrowserWindow
   tabs: WebContentsView[]
+  activeTab: number
   top: number
   // boundsChangedHandlerBound?: boolean
   // zoomHandlerBound?: boolean
@@ -95,6 +103,7 @@ export function reducer(state: MainState, event: MainEvent): MainState {
         },
       }
     }
+
     case "close-window": {
       const { windows } = state
       return {
@@ -116,9 +125,8 @@ export function reducer(state: MainState, event: MainEvent): MainState {
 
     case "add-tab": {
       const { windows } = state
-      const { profileName, url } = event.payload
+      const { profileName, tab } = event.payload
       const windowDetails = windows[profileName]
-
       const { tabs } = windowDetails
 
       return {
@@ -128,10 +136,12 @@ export function reducer(state: MainState, event: MainEvent): MainState {
           [profileName]: {
             ...windowDetails,
             tabs: [...tabs, tab],
+            activeTab: tabs.length,
           },
         },
       }
     }
+
     case "set-top": {
       const { windows } = state
       const { profileName, top } = event.payload
@@ -147,6 +157,28 @@ export function reducer(state: MainState, event: MainEvent): MainState {
         },
       }
     }
+
+    case "activate-tab": {
+      const { windows } = state
+      const { profileName, index } = event.payload
+
+      return {
+        ...state,
+        windows: Object.entries(windows).reduce(
+          (windows: Record<string, WindowDetails>, [name, details]) => {
+            if (profileName === name) {
+              return {
+                ...windows,
+                [profileName]: { ...details, activeTab: index },
+              }
+            }
+            return { ...windows, [profileName]: details }
+          },
+          {},
+        ),
+      }
+    }
+
     case "close-tab": {
       const { windows } = state
       const { profileName, index, activeTab } = event.payload

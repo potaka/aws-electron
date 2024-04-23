@@ -28,6 +28,8 @@ const api = {
       (_, titles: string[], activeTab: number): void =>
         callback(titles, activeTab),
     ),
+  activateTab: (profileName: string, index: number): void =>
+    ipcRenderer.send("activateTab", profileName, index),
   closeTab: (profileName: string, index: number): void =>
     ipcRenderer.send("closeTab", profileName, index),
   setTop: (profileName: string, top: number): void =>

@@ -15,6 +15,7 @@ declare global {
           (): void
         }
       }
+      activateTab: { (profileName: string, index: number): void }
       closeTab: { (profileName: string, index: number): void }
       getConfig: { (): Promise<unknown> }
       setTop: { (profileName: string, top: number): void }
