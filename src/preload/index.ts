@@ -20,8 +20,14 @@ const api = {
     registerLIstener("set-profile-name", (_, profileName: string): void =>
       callback(profileName),
     ),
-  registerNewTabListener: (callback: { (url: string): void }): { (): void } =>
-    registerLIstener("open-tab", (_, url: string): void => callback(url)),
+  registerTabsListener: (callback: {
+    (titles: string[], activeTab: number): void
+  }): { (): void } =>
+    registerLIstener(
+      "set-tabs",
+      (_, titles: string[], activeTab: number): void =>
+        callback(titles, activeTab),
+    ),
   closeTab: (profileName: string, index: number): void =>
     ipcRenderer.send("closeTab", profileName, index),
   setTop: (profileName: string, top: number): void =>

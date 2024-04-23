@@ -33,8 +33,8 @@ function Tabs(): JSX.Element {
 
   useEffect(
     () =>
-      api.registerNewTabListener((url: string): void =>
-        dispatch({ type: "open-tab", payload: url }),
+      api.registerTabsListener((titles: string[], activeTab: number): void =>
+        dispatch({ type: "set-tabs", payload: { titles, activeTab } }),
       ),
     [],
   )

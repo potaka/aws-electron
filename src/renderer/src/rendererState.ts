@@ -38,9 +38,12 @@ interface SetProfileName {
   payload: string
 }
 
-interface OpenTab {
-  type: "open-tab"
-  payload: string
+interface SetTabs {
+  type: "set-tabs"
+  payload: {
+    titles: string[]
+    activeTab: number
+  }
 }
 
 export type RendererEvent =
@@ -49,7 +52,7 @@ export type RendererEvent =
   | LaunchConsole
   | SetActiveTab
   | SetProfileName
-  | OpenTab
+  | SetTabs
 type RendererState = HasOptionalConfig & HasMfaCode & HasOptionalTabs
 
 export function dispatcher(
@@ -67,8 +70,12 @@ export function dispatcher(
       return { ...state, activeTab: event.payload }
     case "set-profile-name":
       return { ...state, profileName: event.payload }
-    case "open-tab":
-      return { ...state, tabs: [...(state.tabs || []), event.payload] }
+    case "set-tabs":
+      return {
+        ...state,
+        tabs: [...event.payload.titles],
+        activeTab: event.payload.activeTab,
+      }
   }
 }
 

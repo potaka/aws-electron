@@ -225,6 +225,15 @@ function reloadWindow(window: BrowserWindow, force: boolean): void {
   }
 }
 
+function sendTabs(profileName: string): void {
+  const { window, tabs, activeTab } = state.windows[profileName]
+  window.webContents.send(
+    "set-tabs",
+    tabs.map((view) => view.webContents.getTitle()),
+    activeTab,
+  )
+}
+
 function openTab(profileName: string, url: string): void {
   const { top, window, tabs } = state.windows[profileName]
   const { contentView } = window
@@ -251,6 +260,7 @@ function openTab(profileName: string, url: string): void {
     return { action: "deny" }
   })
   dispatch({ type: "add-tab", payload: { profileName, tab: view } })
+  sendTabs(profileName)
 
   view.setVisible(true)
 }

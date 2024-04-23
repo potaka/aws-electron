@@ -10,8 +10,10 @@ declare global {
       registerProfileNameListener: {
         (callback: { (profileName: string): void }): { (): void }
       }
-      registerNewTabListener: {
-        (callback: { (url: string): void }): { (): void }
+      registerTabsListener: {
+        (callback: { (titles: string[], activeTab: number): void }): {
+          (): void
+        }
       }
       closeTab: { (profileName: string, index: number): void }
       getConfig: { (): Promise<unknown> }
