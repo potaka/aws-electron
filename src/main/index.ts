@@ -327,8 +327,6 @@ app.whenReady().then(() => {
     reloadWindow(window, force),
   )
 
-  )
-
   Menu.setApplicationMenu(buildAppMenu())
 
   createLauncherWindow()
