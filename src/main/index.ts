@@ -7,6 +7,7 @@ import { createReducer, initialState, reducer } from "./mainState"
 import { Config } from "models"
 import buildAppMenu from "./menu"
 import { getConsoleUrl } from "./getConsoleURL"
+import debounce from "debounce"
 
 const [state, dispatch] = createReducer(reducer, initialState)
 
@@ -74,6 +75,31 @@ function createMfaCacheWindow(): void {
   loadWindowContent(mfaCacheWindow, "mfaCache")
 }
 
+function zoomChange(
+  window: BrowserWindow,
+  profileName: string,
+): { (_: unknown, zoomDirection: "in" | "out"): void } {
+  return debounce((_, zoomDirection: "in" | "out") => {
+    const { zoomLevel } = window.webContents
+    const delta = zoomDirection === "in" ? 1 : -1
+    window.webContents.setZoomLevel(zoomLevel + delta)
+    window.contentView.children.forEach((view) => {
+      ;(view as WebContentsView).webContents.setZoomLevel(zoomLevel + delta)
+      const { top } = state.windows[profileName]
+      const computedTop = parseInt(
+        (top * window.webContents.zoomFactor).toFixed(0),
+      )
+      const bounds = {
+        ...window.getContentBounds(),
+        x: 0,
+        y: computedTop,
+      }
+      bounds.height = bounds.height - computedTop
+      view.setBounds(bounds)
+    })
+  }, 100)
+}
+
 async function launchConsole(
   profileName: string,
   mfaCode: string,
@@ -112,6 +138,11 @@ async function launchConsole(
     })
 
     })
+
+    tabsWindow.webContents.on(
+      "zoom-changed",
+      zoomChange(tabsWindow, profileName),
+    )
 
     loadWindowContent(tabsWindow, "tabs")
   }
@@ -174,6 +205,8 @@ function openTab(profileName: string, url: string): void {
 
   const { webContents: viewWebContents } = view
   viewWebContents.loadURL(url)
+  viewWebContents.addListener("zoom-changed", zoomChange(window, profileName))
+
   contentView.children.forEach((view) => view.setVisible(false))
   contentView.addChildView(view)
 
