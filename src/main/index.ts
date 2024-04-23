@@ -118,6 +118,33 @@ function launchProfile(profileName: string, url: string): BrowserWindow {
   tabsWindow.webContents.send("open-tab", url)
   dispatch({ type: "add-tab", payload: { profileName, url } })
   return tabsWindow
+function reloadWindow(window: BrowserWindow, force: boolean): void {
+  if (!window) {
+    return
+  }
+  const { windows } = state
+  const foundWindow = Object.entries(windows).find(
+    ([profileName]) => window === windows[profileName].window,
+  )
+
+  if (!foundWindow) {
+    return
+  }
+
+  const [_profileName, { tabs, activeTab: currentTab }] = foundWindow
+  if (currentTab === undefined) {
+    return
+  }
+
+  const { webContents } = tabs[currentTab]
+
+  if (force) {
+    webContents.reloadIgnoringCache()
+  } else {
+    webContents.reload()
+  }
+}
+
 }
 
 // This method will be called when Electron has finished
@@ -143,6 +170,10 @@ app.whenReady().then(() => {
       const url = await getConsoleUrl(await getConfig(), mfaCode, profileName)
       launchProfile(profileName, url)
     },
+  ipcMain.on("reloadWindow", (_, window: BrowserWindow, force: boolean): void =>
+    reloadWindow(window, force),
+  )
+
   )
   ipcMain.on("setTop", (_, profileName: string, top: number): void => {
     dispatch({ type: "set-top", payload: { profileName, top } })
