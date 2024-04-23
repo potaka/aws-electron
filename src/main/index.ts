@@ -37,10 +37,7 @@ function createLauncherWindow(): void {
     payload: { window: launcherWindow },
   })
 
-  launcherWindow.on("ready-to-show", () => {
-    launcherWindow.show()
-    // mainWindow.webContents.openDevTools();
-  })
+  launcherWindow.on("ready-to-show", () => launcherWindow.show())
 
   launcherWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -67,10 +64,7 @@ function createMfaCacheWindow(): void {
   //   payload: { window: mfaCacheWindow },
   // })
 
-  mfaCacheWindow.on("ready-to-show", () => {
-    mfaCacheWindow.show()
-    // mainWindow.webContents.openDevTools();
-  })
+  mfaCacheWindow.on("ready-to-show", () => mfaCacheWindow.show())
 
   mfaCacheWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
