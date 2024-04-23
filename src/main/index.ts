@@ -10,6 +10,16 @@ import { getConsoleUrl } from "./getConsoleURL"
 
 const [state, dispatch] = createReducer(reducer, initialState)
 
+function loadWindowContent(window: BrowserWindow, contentName: string): void {
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/${contentName}`)
+  } else {
+    window.loadFile(join(__dirname, "../renderer/${contentName}.html"))
+  }
+}
+
 function createLauncherWindow(): void {
   // Create the browser window.
   const launcherWindow = new BrowserWindow({
@@ -37,13 +47,7 @@ function createLauncherWindow(): void {
     return { action: "deny" }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    launcherWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/launcher`)
-  } else {
-    launcherWindow.loadFile(join(__dirname, "../renderer/launcher.html"))
-  }
+  loadWindowContent(launcherWindow, "launcher")
 }
 
 function createMfaCacheWindow(): void {
@@ -73,13 +77,7 @@ function createMfaCacheWindow(): void {
     return { action: "deny" }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mfaCacheWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/mfaCache`)
-  } else {
-    mfaCacheWindow.loadFile(join(__dirname, "../renderer/mfaCache.html"))
-  }
+  loadWindowContent(mfaCacheWindow, "mfaCache")
 }
 
 function launchProfile(profileName: string, url: string): BrowserWindow {
@@ -121,13 +119,7 @@ function launchProfile(profileName: string, url: string): BrowserWindow {
       return { action: "deny" }
     })
 
-    // HMR for renderer base on electron-vite cli.
-    // Load the remote URL for development or the local html file for production.
-    if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-      tabsWindow.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/tabs`)
-    } else {
-      tabsWindow.loadFile(join(__dirname, "../renderer/tabs.html"))
-    }
+    loadWindowContent(tabsWindow, "tabs")
   }
   tabsWindow.webContents.send("open-tab", url)
   dispatch({ type: "add-tab", payload: { profileName, url } })
