@@ -45,5 +45,15 @@ jobs:
         if: matrix.platform == 'windows-latest'
         run: npm run build:win
 
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${matrix.platform}-build
+          path: |
+            dist
+            !dist/*-unpacked
+            !dist/*yml
+            !dist/*yaml
+
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
