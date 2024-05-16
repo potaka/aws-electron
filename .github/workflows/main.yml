@@ -45,13 +45,36 @@ jobs:
         if: matrix.platform == 'windows-latest'
         run: npm run build:win
 
-      - name: Archive build artifacts
+      - name: Archive build artifacts (linux)
+        if: matrix.platform == 'ubuntu-20.04'
         uses: actions/upload-artifact@v4
         with:
-          name: build
+          name: build-linux
           path: |
             dist
-            !dist/*-unpacked/**/*
+            !dist/linux-unpacked/**/*
+            !dist/*yml
+            !dist/*yaml
+
+      - name: Archive build artifacts (mac)
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-mac
+          path: |
+            dist
+            !dist/mac-arm64/**/*
+            !dist/*yml
+            !dist/*yaml
+
+      - name: Archive build artifacts (win)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-win
+          path: |
+            dist
+            !dist/win-unpacked/**/*
             !dist/*yml
             !dist/*yaml
 
