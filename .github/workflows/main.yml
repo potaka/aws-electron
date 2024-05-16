@@ -48,10 +48,10 @@ jobs:
       - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${matrix.platform}-build
+          name: build
           path: |
             dist
-            !dist/*-unpacked
+            !dist/*-unpacked/**/*
             !dist/*yml
             !dist/*yaml
 
