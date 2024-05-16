@@ -12,7 +12,7 @@ interface GetConfigArgs {
   configPath?: string
 }
 
-interface IsMultiStageRoleAssumingProfileArguments {
+interface UsableProfileFilterArguments {
   profiles: Record<string, Profile>
   profileName: string
 }
@@ -99,7 +99,7 @@ export function getProfileList(
 function isMultiStageRoleAssumingProfile({
   profiles,
   profileName,
-}: IsMultiStageRoleAssumingProfileArguments): boolean {
+}: UsableProfileFilterArguments): boolean {
   const profileList = getProfileList(profiles, profileName).slice(1)
 
   return (
@@ -121,7 +121,8 @@ export async function getConfig({
       ([profileName, profile]) =>
         (profile.role_arn !== undefined &&
           credentialProfiles.includes(profile.source_profile || profileName)) ||
-        isMultiStageRoleAssumingProfile({ profiles, profileName }),
+        isMultiStageRoleAssumingProfile({ profiles, profileName }) ||
+        profile.sso_session !== undefined,
     )
     .map(([profileName]) => profileName)
 

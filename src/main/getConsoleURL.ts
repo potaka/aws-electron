@@ -79,20 +79,19 @@ async function getRoleCredentials(
       }
 
       const { sts } = (await stsAndCredentials)!
-
       const assumedRole = await sts.send(
         new AssumeRoleCommand(assumeRoleParams),
       )
 
-      const credentials = {
-        accessKeyId: assumedRole.Credentials!.AccessKeyId!,
-        secretAccessKey: assumedRole.Credentials!.SecretAccessKey!,
-        sessionToken: assumedRole.Credentials!.SessionToken,
-        expiration: assumedRole.Credentials!.Expiration,
-      }
-
       return {
-        sts: new STSClient({ credentials }),
+        sts: new STSClient({
+          credentials: {
+            accessKeyId: assumedRole.Credentials!.AccessKeyId!,
+            secretAccessKey: assumedRole.Credentials!.SecretAccessKey!,
+            sessionToken: assumedRole.Credentials!.SessionToken,
+            expiration: assumedRole.Credentials!.Expiration,
+          },
+        }),
         credentials: assumedRole.Credentials!,
       }
     },
