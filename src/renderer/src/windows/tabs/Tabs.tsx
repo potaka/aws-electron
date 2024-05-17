@@ -56,7 +56,7 @@ function Tabs(): JSX.Element {
               console.log(`sending ${activeTab} back`)
             }}
           >
-            Back
+            ⬅️
           </CNavLink>
         </CNavItem>
         <CNavItem>
@@ -66,7 +66,7 @@ function Tabs(): JSX.Element {
               console.log(`sending ${activeTab} forward`)
             }}
           >
-            Forwards
+            ➡️
           </CNavLink>
         </CNavItem>
         {tabs &&
