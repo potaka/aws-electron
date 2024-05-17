@@ -1,17 +1,42 @@
 import { z } from "zod"
 
-export const ProfileSchema = z
+export const EntryTypeSchema = z.union([
+  z.literal("profile"),
+  z.literal("sso-session"),
+])
+
+export type EntryType = z.infer<typeof EntryTypeSchema>
+
+const Extra = z
   .object({
-    role_arn: z.string().optional(),
-    mfa_serial: z.string().optional(),
-    source_profile: z.string().optional(),
-    sso_session: z.string().optional(),
-    region: z.string().optional(),
     order: z.number().optional(),
+    entryType: EntryTypeSchema.optional(),
   })
   .passthrough()
 
+export const SsoSessionSchema = Extra.merge(
+  z.object({
+    sso_start_url: z.string().optional(),
+    sso_registration_scopes: z.string().optional(),
+  }),
+)
+
+export const ProfileSchema = Extra.merge(
+  z.object({
+    role_arn: z.string().optional(),
+    mfa_serial: z.string().optional(),
+    source_profile: z.string().optional(),
+    region: z.string().optional(),
+    sso_session: z.string().optional(),
+    sso_account_id: z.string().optional(),
+    sso_role_name: z.string().optional(),
+  }),
+)
+export const ConfigEntrySchema = SsoSessionSchema.merge(ProfileSchema)
+
+export type ConfigEntry = z.infer<typeof ConfigEntrySchema>
 export type Profile = z.infer<typeof ProfileSchema>
+export type SsoSession = z.infer<typeof SsoSessionSchema>
 
 export const CredentialsSchema = z
   .object({
@@ -25,6 +50,7 @@ export type Credentials = z.infer<typeof CredentialsSchema>
 
 export const ConfigSchema = z.object({
   profiles: z.record(z.string(), ProfileSchema),
+  ssoSessions: z.record(z.string(), SsoSessionSchema).optional(),
   credentialProfiles: z.array(z.string()),
   longTermCredentialProfiles: z.array(z.string()),
   usableProfiles: z.array(z.string()),
