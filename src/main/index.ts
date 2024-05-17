@@ -322,6 +322,8 @@ app.whenReady().then(() => {
     reloadWindow(window, force),
   )
 
+  ipcMain.on("open-profile-list", createLauncherWindow)
+
   Menu.setApplicationMenu(buildAppMenu())
 
   createLauncherWindow()
