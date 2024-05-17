@@ -69,6 +69,16 @@ function Tabs(): JSX.Element {
             ➡️
           </CNavLink>
         </CNavItem>
+        <CNavItem>
+          <CNavLink
+            href="#!"
+            onClick={() => {
+              console.log(`reloading ${activeTab}`)
+            }}
+          >
+            🔄
+          </CNavLink>
+        </CNavItem>
         {tabs &&
           tabs.map((tab, index) => (
             <CNavItem key={index}>
