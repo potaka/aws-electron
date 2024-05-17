@@ -2,7 +2,16 @@ import * as os from "os"
 import * as path from "path"
 import * as fs from "fs"
 import * as util from "util"
-import { Config, CredentialsSchema, Profile, ProfileSchema } from "models"
+import {
+  Config,
+  ConfigEntry,
+  ConfigEntrySchema,
+  CredentialsSchema,
+  EntryType,
+  EntryTypeSchema,
+  Profile,
+  SsoSession,
+} from "models"
 import * as ini from "ini"
 import debounce from "debounce"
 
@@ -10,6 +19,10 @@ const readFile = util.promisify(fs.readFile)
 
 interface GetConfigArgs {
   configPath?: string
+}
+
+interface GetProfilesArgs {
+  entries: [string, ConfigEntry][]
 }
 
 interface UsableProfileFilterArguments {
@@ -27,24 +40,56 @@ const readFileOptions = {
   flag: "r" as const,
 }
 function cleanProfileKey(key: string): string {
-  return key.replace("profile ", "")
+  return key.replace("profile ", "").replace("sso-session ", "")
 }
 
-async function getProfiles({
+function entryType(name: string): EntryType {
+  const components = name.split(" ")
+  if (components.length === 1) {
+    return "profile"
+  }
+  return EntryTypeSchema.parse(components[0])
+}
+
+async function getConfigEntries({
   configPath,
-}: GetConfigArgs): Promise<Record<string, Profile>> {
+}: GetConfigArgs): Promise<[string, ConfigEntry][]> {
   const configFilePath = path.join(configPath!, "config")
   const configFileContent = await readFile(configFilePath, readFileOptions)
   const awsConfig = ini.parse(configFileContent)
-  const profiles = Object.entries(awsConfig)
-    .map(([profileName, profile], index) => ({
-      [cleanProfileKey(profileName)]: ProfileSchema.parse({
-        ...profile,
+  const entries = Object.entries(awsConfig).map(
+    ([entryName, entry], index): [string, ConfigEntry] => [
+      cleanProfileKey(entryName),
+      ConfigEntrySchema.parse({
+        ...entry,
         order: index,
+        entryType: entryType(entryName),
       }),
+    ],
+  )
+  return entries
+}
+
+function getProfiles({ entries }: GetProfilesArgs): Record<string, Profile> {
+  const profiles = entries
+    .filter(([, entry]): boolean => entry.entryType === "profile")
+    .map(([profileName, profile]) => ({
+      [profileName]: profile,
     }))
     .reduce((prev, cur) => ({ ...cur, ...prev }), {})
   return profiles
+}
+
+function getSsoSessions({
+  entries,
+}: GetProfilesArgs): Record<string, SsoSession> {
+  const ssoSessions = entries
+    .filter(([, entry]): boolean => entry.entryType === "sso-session")
+    .map(([sessionName, session]) => ({
+      [sessionName]: session,
+    }))
+    .reduce((prev, cur) => ({ ...cur, ...prev }), {})
+  return ssoSessions
 }
 
 async function getCredentials({
@@ -113,7 +158,10 @@ function isMultiStageRoleAssumingProfile({
 export async function getConfig({
   configPath = path.join(os.homedir(), ".aws"),
 }: GetConfigArgs = {}): Promise<Config> {
-  const profiles = await getProfiles({ configPath })
+  const configEntries = await getConfigEntries({ configPath })
+  const profiles = getProfiles({ entries: configEntries })
+  const ssoSessions = getSsoSessions({ entries: configEntries })
+
   const { credentialProfiles, longTermCredentialProfiles } =
     await getCredentials({ configPath })
   const usableProfiles = Object.entries(profiles)
@@ -149,6 +197,7 @@ export async function getConfig({
     longTermCredentialProfiles,
     usableProfiles,
     cachableProfiles,
+    ssoSessions,
   }
 }
 
