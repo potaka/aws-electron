@@ -2,14 +2,13 @@ import "@coreui/coreui/dist/css/coreui.min.css"
 import "../../assets/main.css"
 import { CContainer } from "@coreui/react"
 import { useEffect, useReducer } from "react"
-import ProfileRow from "./ProfileRow"
-import ProfileHeader from "./ProfileHeader"
 import {
   dispatcher,
   initialState,
   setConfig as _setConfig,
 } from "@renderer/rendererState"
 import MfaBox from "@renderer/components/MfaBox"
+import ProfileAccordion from "./ProfileAccordion"
 const { api } = window
 
 function Launcher(): JSX.Element {
@@ -31,7 +30,6 @@ function Launcher(): JSX.Element {
   return (
     <>
       <CContainer fluid>
-        <ProfileHeader />
         {config &&
           Object.entries(config.profiles)
             .sort(([_a, a], [_b, b]) => a.order! - b.order!)
@@ -39,7 +37,7 @@ function Launcher(): JSX.Element {
               config.usableProfiles.includes(profileName),
             )
             .map(([profileName, profile]) => (
-              <ProfileRow
+              <ProfileAccordion
                 key={profileName}
                 profileName={profileName}
                 profile={profile}

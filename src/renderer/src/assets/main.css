@@ -1,43 +1,6 @@
 body {
   user-select: none;
-  width: 108%;
-  overflow-x: clip;
 }
-
-/* code {
-  font-weight: 600;
-  padding: 3px 5px;
-  border-radius: 2px;
-  background-color: var(--color-background-mute);
-  font-family:
-    ui-monospace,
-    SFMono-Regular,
-    SF Mono,
-    Menlo,
-    Consolas,
-    Liberation Mono,
-    monospace;
-  font-size: 85%;
-} */
-
-.container-fluid {
-  padding-right: 0;
-}
-
-/* #root {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  margin-bottom: 80px;
-} */
-
-/* .tip {
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--ev-c-text-2);
-  font-weight: 600;
-} */
 
 .heading {
   font-weight: bolder;
@@ -51,16 +14,6 @@ body {
 .profile:nth-child(even) > div:not(.launchButton) {
   background-color: lightgray;
 }
-
-.profile {
-  width: 100%;
-  padding-bottom: 1px;
-}
-
-.launchButton {
-margin-left: 5px;
-}
-
 
 .mfaBox {
   position: sticky;
