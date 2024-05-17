@@ -15,6 +15,7 @@ import { Config } from "models"
 import buildAppMenu from "./menu"
 import { getConsoleUrl } from "./getConsoleURL"
 import debounce from "debounce"
+import getApplicationVersion from "./getApplicationVersion"
 
 const [state, dispatch] = createReducer(reducer, initialState)
 
@@ -34,6 +35,7 @@ function createLauncherWindow(): void {
     width: 900,
     height: 670,
     show: false,
+    title: `AWS Console v${getApplicationVersion()}`,
     ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
