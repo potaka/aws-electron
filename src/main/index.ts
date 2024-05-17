@@ -30,6 +30,10 @@ function loadWindowContent(window: BrowserWindow, contentName: string): void {
 }
 
 function createLauncherWindow(): void {
+  if (state.mainWindow) {
+    state.mainWindow.focus()
+    return
+  }
   // Create the browser window.
   const launcherWindow = new BrowserWindow({
     width: 900,
@@ -48,6 +52,7 @@ function createLauncherWindow(): void {
   })
 
   launcherWindow.on("ready-to-show", () => launcherWindow.show())
+  launcherWindow.on("close", () => dispatch({type: "launcher-window-closed"}))
 
   launcherWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)

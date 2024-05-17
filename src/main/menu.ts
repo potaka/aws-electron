@@ -8,6 +8,10 @@ export default function buildAppMenu(): Menu {
       label: isMac ? app.name : "AWS Console",
       submenu: [
         {
+          label: "Profile List",
+          click: () => ipcMain.emit("open-profile-list"),
+        },
+        {
           label: "Preferences",
           click: () => ipcMain.emit("open-preferences"),
         },

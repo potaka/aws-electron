@@ -5,6 +5,9 @@ interface LauncherWindowCreated {
   type: "launcher-window-created"
   payload: { window: Electron.BrowserWindow }
 }
+interface LauncherWindowClosed {
+  type: "launcher-window-closed"
+}
 
 interface OpenWindow {
   type: "open-window"
@@ -54,6 +57,7 @@ interface CloseTab {
 
 export type MainEvent =
   | LauncherWindowCreated
+  | LauncherWindowClosed
   | OpenWindow
   | CloseWindow
   | AddTab
@@ -82,6 +86,9 @@ export function reducer(state: MainState, event: MainEvent): MainState {
   switch (event.type) {
     case "launcher-window-created":
       return { ...state, mainWindow: event.payload.window }
+
+    case "launcher-window-closed":
+      return { ...state, mainWindow: undefined }
 
     case "open-window": {
       const { windows } = state
