@@ -265,18 +265,6 @@ function openTab(profileName: string, url: string): void {
   const { webContents: viewWebContents } = view
   viewWebContents.loadURL(url)
   if (tabs.length === 0) {
-    console.log("working around broken AWS Console initial load doesn't work")
-    let waitingTime = 0
-    const waitForReady = (): void => {
-      if (viewWebContents.isLoading()) {
-        waitingTime += 100
-        setTimeout(waitForReady, 100)
-      } else {
-        viewWebContents.reload()
-        console.log(`reloaded after ${waitingTime} ms`)
-      }
-    }
-    waitForReady()
   }
   viewWebContents.addListener("page-title-updated", () => {
     sendTabs(profileName)
