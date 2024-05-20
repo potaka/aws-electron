@@ -25,7 +25,7 @@ function loadWindowContent(window: BrowserWindow, contentName: string): void {
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     window.loadURL(`${process.env["ELECTRON_RENDERER_URL"]}/${contentName}`)
   } else {
-    window.loadFile(join(__dirname, "../renderer/${contentName}.html"))
+    window.loadFile(join(__dirname, `../renderer/${contentName}.html`))
   }
 }
 
