@@ -15,6 +15,7 @@ export default defineConfig({
         input: {
           launcher: resolve(__dirname, "src/renderer/launcher.html"),
           mfaCache: resolve(__dirname, "src/renderer/mfaCache.html"),
+          tabs: resolve(__dirname, "src/renderer/tabs.html"),
         },
       },
     },
