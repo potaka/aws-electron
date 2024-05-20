@@ -52,7 +52,7 @@ function createLauncherWindow(): void {
   })
 
   launcherWindow.on("ready-to-show", () => launcherWindow.show())
-  launcherWindow.on("close", () => dispatch({type: "launcher-window-closed"}))
+  launcherWindow.on("close", () => dispatch({ type: "launcher-window-closed" }))
 
   launcherWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
