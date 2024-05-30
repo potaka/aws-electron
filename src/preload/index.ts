@@ -37,6 +37,7 @@ const api = {
   getConfig: async (): Promise<unknown> => ipcRenderer.invoke("getConfig"),
   launchConsole: (profileName: string, mfaCode: string): void =>
     ipcRenderer.send("launchConsole", profileName, mfaCode),
+  getVersion: async (): Promise<string> => ipcRenderer.invoke("getVersion"),
 }
 
 contextBridge.exposeInMainWorld("api", api)

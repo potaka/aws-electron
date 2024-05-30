@@ -61,6 +61,41 @@ function createLauncherWindow(): void {
   loadWindowContent(launcherWindow, "launcher")
 }
 
+function createPreferencesWindow(): void {
+  if (state.preferencesWindow) {
+    state.preferencesWindow.focus()
+    return
+  }
+  // Create the browser window.
+  const preferencesWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    title: `AWS Console v${app.getVersion()} - Preferences`,
+    ...(process.platform === "linux" ? { icon } : {}),
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      sandbox: true,
+    },
+  })
+  dispatch({
+    type: "preferences-window-created",
+    payload: { window: preferencesWindow },
+  })
+
+  preferencesWindow.on("ready-to-show", () => preferencesWindow.show())
+  preferencesWindow.on("close", () =>
+    dispatch({ type: "preferences-window-closed" }),
+  )
+
+  preferencesWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: "deny" }
+  })
+
+  loadWindowContent(preferencesWindow, "preferences")
+}
+
 function createMfaCacheWindow(): void {
   // Create the browser window.
   const mfaCacheWindow = new BrowserWindow({
@@ -316,6 +351,9 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle("getConfig", () => getConfig())
+
+  ipcMain.handle("getVersion", app.getVersion)
+
   ipcMain.on("openMfaCache", () => createMfaCacheWindow())
 
   ipcMain.on("launchConsole", (_, profileName: string, mfaCode: string) =>
@@ -339,6 +377,8 @@ app.whenReady().then(() => {
   )
 
   ipcMain.on("open-profile-list", createLauncherWindow)
+
+  ipcMain.on("open-preferences", createPreferencesWindow)
 
   Menu.setApplicationMenu(buildAppMenu())
 

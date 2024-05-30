@@ -9,6 +9,15 @@ interface LauncherWindowClosed {
   type: "launcher-window-closed"
 }
 
+interface PreferencesWindowCreated {
+  type: "preferences-window-created"
+  payload: { window: Electron.BrowserWindow }
+}
+
+interface PreferencesWindowClosed {
+  type: "preferences-window-closed"
+}
+
 interface OpenWindow {
   type: "open-window"
   payload: {
@@ -58,6 +67,8 @@ interface CloseTab {
 export type MainEvent =
   | LauncherWindowCreated
   | LauncherWindowClosed
+  | PreferencesWindowCreated
+  | PreferencesWindowClosed
   | OpenWindow
   | CloseWindow
   | AddTab
@@ -79,6 +90,7 @@ interface WindowDetails {
 
 export interface MainState {
   mainWindow?: Electron.BrowserWindow
+  preferencesWindow?: Electron.BrowserWindow
   windows: Record<string, WindowDetails>
 }
 
@@ -89,6 +101,12 @@ export function reducer(state: MainState, event: MainEvent): MainState {
 
     case "launcher-window-closed":
       return { ...state, mainWindow: undefined }
+
+    case "preferences-window-created":
+      return { ...state, preferencesWindow: event.payload.window }
+
+    case "preferences-window-closed":
+      return { ...state, preferencesWindow: undefined }
 
     case "open-window": {
       const { windows } = state

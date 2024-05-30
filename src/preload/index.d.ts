@@ -20,6 +20,7 @@ declare global {
       getConfig: { (): Promise<unknown> }
       setTop: { (profileName: string, top: number): void }
       launchConsole: { (profileName: string, mfaCode: string): void }
+      getVersion: { (): Promise<string> }
     }
   }
 }

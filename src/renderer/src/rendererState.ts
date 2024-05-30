@@ -14,6 +14,18 @@ interface HasOptionalTabs {
   profileName?: string
 }
 
+interface HasOptionalSeconds {
+  seconds?: string
+}
+
+interface HasOptionalTitleFormat {
+  titleFormat?: string
+}
+
+interface HasOptionalVersion {
+  version?: string
+}
+
 interface SetConfig {
   type: "set-config"
   payload: Config
@@ -46,6 +58,21 @@ interface SetTabs {
   }
 }
 
+interface SetSeconds {
+  type: "set-seconds"
+  payload: string
+}
+
+interface SetTitleFormat {
+  type: "set-title-format"
+  payload: string
+}
+
+interface SetVersion {
+  type: "set-version"
+  payload: string
+}
+
 export type RendererEvent =
   | SetConfig
   | SetMfaCode
@@ -53,7 +80,16 @@ export type RendererEvent =
   | SetActiveTab
   | SetProfileName
   | SetTabs
-type RendererState = HasOptionalConfig & HasMfaCode & HasOptionalTabs
+  | SetSeconds
+  | SetTitleFormat
+  | SetVersion
+
+type RendererState = HasOptionalConfig &
+  HasMfaCode &
+  HasOptionalTabs &
+  HasOptionalSeconds &
+  HasOptionalTitleFormat &
+  HasOptionalVersion
 
 export function dispatcher(
   state: RendererState,
@@ -76,6 +112,12 @@ export function dispatcher(
         tabs: [...event.payload.titles],
         activeTab: event.payload.activeTab,
       }
+    case "set-seconds":
+      return { ...state, seconds: event.payload }
+    case "set-title-format":
+      return { ...state, titleFormat: event.payload }
+    case "set-version":
+      return { ...state, version: event.payload }
   }
 }
 

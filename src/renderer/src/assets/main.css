@@ -23,3 +23,17 @@ body {
 a.nav-link {
   cursor: default;
 }
+
+.tt {
+  font-weight: 600;
+  padding: 3px 5px;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    SF Mono,
+    Menlo,
+    Consolas,
+    Liberation Mono,
+    monospace;
+  font-size: 85%;
+}
