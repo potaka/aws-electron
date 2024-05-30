@@ -5,6 +5,7 @@ interface LauncherWindowCreated {
   type: "launcher-window-created"
   payload: { window: Electron.BrowserWindow }
 }
+
 interface LauncherWindowClosed {
   type: "launcher-window-closed"
 }
