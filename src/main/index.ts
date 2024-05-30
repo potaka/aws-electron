@@ -334,7 +334,7 @@ function openTab(profileName: string, url: string): void {
 }
 
 if (!app.requestSingleInstanceLock()) {
-  process.exit(1)
+  app.quit()
 }
 
 // This method will be called when Electron has finished
