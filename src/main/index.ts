@@ -297,6 +297,10 @@ function openTab(profileName: string, url: string): void {
   view.setVisible(true)
 }
 
+if (!app.requestSingleInstanceLock()) {
+  process.exit(1)
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
