@@ -32,6 +32,3 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
-
-### Upgrade notes
-1. `eslint` and family - `eslint` 9.x wants a new config format.
