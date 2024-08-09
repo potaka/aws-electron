@@ -15,6 +15,8 @@ import { Config } from "models"
 import buildAppMenu from "./menu"
 import { getConsoleUrl } from "./getConsoleURL"
 import debounce from "debounce"
+import settings from "electron-settings"
+import * as fs from "fs/promises"
 
 const [state, dispatch] = createReducer(reducer, initialState)
 
@@ -335,6 +337,10 @@ function openTab(profileName: string, url: string): void {
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
+}
+
+if (process.platform !== "win32") {
+  fs.chmod(settings.file(), 0o600)
 }
 
 // This method will be called when Electron has finished
