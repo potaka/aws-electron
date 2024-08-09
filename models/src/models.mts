@@ -62,3 +62,11 @@ export type Config = z.infer<typeof ConfigSchema>
 export const SigninResultSchema = z.object({ SigninToken: z.string() })
 
 export type SigninResult = z.infer<typeof SigninResultSchema>
+
+export const OidcClientSchema = z.object({
+  clientId: z.string(),
+  clientSecret: z.string(),
+  clientSecretExpiresAt: z.number(),
+})
+
+export type OidcClient = z.infer<typeof OidcClientSchema>
