@@ -335,6 +335,17 @@ function openTab(profileName: string, url: string): void {
   view.setVisible(true)
 }
 
+async function getActiveProfileTab(): Promise<number> {
+  const activeTab = (await settings.get("activeProfileTab")) as
+    | number
+    | undefined
+  return activeTab !== undefined ? activeTab : -1
+}
+
+function setActiveProfileTab(profileTab: number): void {
+  settings.set("activeProfileTab", profileTab)
+}
+
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 }
@@ -360,6 +371,12 @@ app.whenReady().then(() => {
   ipcMain.handle("getConfig", () => getConfig())
 
   ipcMain.handle("getVersion", app.getVersion)
+
+  ipcMain.handle("getActiveProfileTab", getActiveProfileTab)
+
+  ipcMain.on("setActiveProfileTab", (_, profileTab: number) =>
+    setActiveProfileTab(profileTab),
+  )
 
   ipcMain.on("openMfaCache", () => createMfaCacheWindow())
 

@@ -21,6 +21,8 @@ declare global {
       setTop: { (profileName: string, top: number): void }
       launchConsole: { (profileName: string, mfaCode: string): void }
       getVersion: { (): Promise<string> }
+      getActiveProfileTab: { (): Promise<number> }
+      setActiveProfileTab: { (activeProfileTab: number): void }
     }
   }
 }

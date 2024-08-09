@@ -38,6 +38,10 @@ const api = {
   launchConsole: (profileName: string, mfaCode: string): void =>
     ipcRenderer.send("launchConsole", profileName, mfaCode),
   getVersion: async (): Promise<string> => ipcRenderer.invoke("getVersion"),
+  getActiveProfileTab: async (): Promise<number> =>
+    ipcRenderer.invoke("getActiveProfileTab"),
+  setActiveProfileTab: (profileTab: number): void =>
+    ipcRenderer.send("setActiveProfileTab", profileTab),
 }
 
 contextBridge.exposeInMainWorld("api", api)
