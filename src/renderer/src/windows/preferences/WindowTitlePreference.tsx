@@ -34,7 +34,7 @@ function WindowTitlePreference(): JSX.Element {
         payload: (59 - new Date().getSeconds()).toString().padStart(2, "0"),
       })
     }, 1000)
-    return () => clearInterval(interval)
+    return (): void => clearInterval(interval)
   })
 
   useEffect(() => {
