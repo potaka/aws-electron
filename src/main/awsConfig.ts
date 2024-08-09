@@ -9,16 +9,23 @@ import {
   CredentialsSchema,
   EntryType,
   EntryTypeSchema,
+  OidcClient,
   Profile,
   SsoSession,
 } from "models"
 import * as ini from "ini"
 import debounce from "debounce"
+import settings from "electron-settings"
+import { SSOOIDCClient, RegisterClientCommand } from "@aws-sdk/client-sso-oidc"
+import { OidcClientSchema } from "models"
 
 const readFile = util.promisify(fs.readFile)
 
 interface GetConfigArgs {
   configPath?: string
+}
+interface GetSsoConfigArgs extends GetConfigArgs {
+  profileName: string
 }
 
 interface GetProfilesArgs {
@@ -218,4 +225,41 @@ export function watchConfigFile(callback: { (newConfig: Config): void }): void {
       }
     },
   )
+}
+
+export async function getSsoConfig({
+  profileName,
+  configPath = path.join(os.homedir(), ".aws"),
+}: GetSsoConfigArgs): Promise<Config | undefined> {
+  console.log(`Getting SSO config for ${profileName}`)
+  const client = new SSOOIDCClient()
+
+  const configFile = await getConfig({ configPath })
+  const ssoSession = configFile.ssoSessions?.[profileName]
+  if (ssoSession === undefined) {
+    return undefined
+  }
+  let oidcClient: OidcClient
+  const cachedClient = await settings.get(["oidcClients", profileName])
+  if (cachedClient !== undefined) {
+    oidcClient = OidcClientSchema.parse(cachedClient)
+  } else {
+    const response = await client.send(
+      new RegisterClientCommand({
+        clientName: "nz.jnawk.awsconsole",
+        clientType: "public",
+        grantTypes: ["urn:ietf:params:oauth:grant-type:device_code"],
+        issuerUrl: ssoSession.sso_start_url,
+        scopes: ["sso:account:access"],
+      }),
+    )
+    oidcClient = {
+      clientId: response.clientId!,
+      clientSecret: response.clientSecret!,
+      clientSecretExpiresAt: response.clientSecretExpiresAt!,
+    }
+    settings.set(["oidcClients", profileName], oidcClient)
+  }
+
+  return configFile // TODO nope, not this
 }

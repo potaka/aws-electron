@@ -23,6 +23,7 @@ declare global {
       getVersion: { (): Promise<string> }
       getActiveProfileTab: { (): Promise<number> }
       setActiveProfileTab: { (activeProfileTab: number): void }
+      getSsoConfig: { (profileName: string): Promise<unknown> }
     }
   }
 }
