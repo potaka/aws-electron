@@ -57,7 +57,7 @@
     "electron-updater": "^6.1.7",
     "electron-vite": "^2.3.0",
     "eslint": "^8.56.0",
-    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react": "^7.35.0",
     "ini": "^4.1.3",
     "prettier": "^3.2.4",
     "react": "^18.3.1",
