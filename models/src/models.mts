@@ -71,3 +71,10 @@ export const OidcClientSchema = z.object({
 })
 
 export type OidcClient = z.infer<typeof OidcClientSchema>
+
+export const SsoTokenSchema = z.object({
+  accessToken: z.string(),
+  expiresAt: z.number(),
+})
+
+export type SsoToken = z.infer<typeof SsoTokenSchema>

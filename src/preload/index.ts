@@ -42,8 +42,13 @@ const api = {
     ipcRenderer.invoke("getActiveProfileTab"),
   setActiveProfileTab: (profileTab: number): void =>
     ipcRenderer.send("setActiveProfileTab", profileTab),
-  getSsoConfig: async (profileName: string): Promise<unknown> =>
-    ipcRenderer.invoke("getSsoConfig", profileName),
+  getSsoConfig: async (
+    profileName: string,
+    requestId: string,
+  ): Promise<unknown> =>
+    ipcRenderer.invoke("getSsoConfig", profileName, requestId),
+  cancelGetSsoConfig: (requestId: string): void =>
+    ipcRenderer.send("cancelGetSsoConfig", requestId),
 }
 
 contextBridge.exposeInMainWorld("api", api)

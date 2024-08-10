@@ -12,6 +12,9 @@ import {
   OidcClient,
   Profile,
   SsoSession,
+  OidcClientSchema,
+  SsoToken,
+  SsoTokenSchema,
 } from "models"
 import * as ini from "ini"
 import debounce from "debounce"
@@ -24,18 +27,32 @@ import {
   AuthorizationPendingException,
   CreateTokenCommandOutput,
 } from "@aws-sdk/client-sso-oidc"
-import { OidcClientSchema } from "models"
+import {
+  SSOClient,
+  paginateListAccountRoles,
+  paginateListAccounts,
+  RoleInfo,
+} from "@aws-sdk/client-sso"
 
 const readFile = util.promisify(fs.readFile)
 
 const pendingRequests = new Set()
 const recentlyCancelledRequests = new Set()
 
+interface GetOidcClientArgs {
+  profileName: string
+  ssoSession: SsoSession
+}
+
 interface GetConfigArgs {
   configPath?: string
 }
 interface GetSsoConfigArgs extends GetConfigArgs {
   profileName: string
+  requestId: string
+}
+
+interface GetAccessTokenArgs extends GetOidcClientArgs {
   requestId: string
 }
 
@@ -243,7 +260,6 @@ async function getOidcClient({
   profileName,
   ssoSession,
 }: GetOidcClientArgs): Promise<OidcClient> {
-  const ssoClient = new SSOOIDCClient()
   let oidcClient: OidcClient
   const cachedClient = await settings.get(["oidcClients", profileName])
   if (cachedClient !== undefined) {
@@ -252,6 +268,7 @@ async function getOidcClient({
       return oidcClient
     }
   }
+  const ssoClient = new SSOOIDCClient()
   const response = await ssoClient.send(
     new RegisterClientCommand({
       clientName: "nz.jnawk.awsconsole",
@@ -270,22 +287,22 @@ async function getOidcClient({
   return oidcClient
 }
 
-export async function getSsoConfig({
+async function getAccessToken({
   profileName,
   requestId,
-  configPath = path.join(os.homedir(), ".aws"),
-}: GetSsoConfigArgs): Promise<Config | undefined> {
-  const configFile = await getConfig({ configPath })
-  const ssoSession = configFile.ssoSessions?.[profileName]
-  if (ssoSession === undefined) {
-    return undefined
+  ssoSession,
+}: GetAccessTokenArgs): Promise<SsoToken> {
+  let ssoToken: SsoToken
+  const cachedToken = await settings.get(["ssoTokens", profileName])
+  if (cachedToken !== undefined) {
+    ssoToken = SsoTokenSchema.parse(cachedToken)
+    if (ssoToken.expiresAt > new Date().getTime()) {
+      return ssoToken
+    }
   }
-
-  // TODO rewrite in terms of get token, get token will get clients as required
   const oidcClient = await getOidcClient({ profileName, ssoSession })
-
-  const ssoClient = new SSOOIDCClient()
-  const response = await ssoClient.send(
+  const ssoOidcClient = new SSOOIDCClient({ region: ssoSession.sso_region })
+  const response = await ssoOidcClient.send(
     new StartDeviceAuthorizationCommand({
       clientId: oidcClient.clientId,
       clientSecret: oidcClient.clientSecret,
@@ -316,7 +333,7 @@ export async function getSsoConfig({
       return reject("Cancelled!")
     }
 
-    ssoClient
+    ssoOidcClient
       .send(
         new CreateTokenCommand({
           clientId: oidcClient.clientId,
@@ -344,7 +361,58 @@ export async function getSsoConfig({
 
   pendingRequests.add(requestId)
   const tokenResponse: CreateTokenCommandOutput = await new Promise(tokenGetter)
-  console.log(tokenResponse.accessToken)
+  ssoToken = {
+    accessToken: tokenResponse.accessToken!,
+    expiresAt: new Date().getTime() + tokenResponse.expiresIn! * 1000,
+  }
+  settings.set(["ssoTokens", profileName], ssoToken)
+  return ssoToken
+}
+
+export async function getSsoConfig({
+  profileName,
+  requestId,
+  configPath = path.join(os.homedir(), ".aws"),
+}: GetSsoConfigArgs): Promise<Config | undefined> {
+  const configFile = await getConfig({ configPath })
+  const ssoSession = configFile.ssoSessions?.[profileName]
+  if (ssoSession === undefined) {
+    return undefined
+  }
+
+  const accessToken = await getAccessToken({
+    profileName,
+    requestId,
+    ssoSession,
+  })
+
+  const ssoClient = new SSOClient({
+    region: ssoSession.sso_region,
+    maxAttempts: 10,
+  })
+
+  const listAccountsPaginator = paginateListAccounts(
+    { client: ssoClient, pageSize: 100 },
+    { accessToken: accessToken.accessToken },
+  )
+  const roleList: Array<RoleInfo> = []
+  for await (const page of listAccountsPaginator) {
+    for (const account of page.accountList!) {
+      console.log(`${account.accountName}`)
+      const listAccountRolesPaginator = paginateListAccountRoles(
+        { client: ssoClient, pageSize: 100 },
+        {
+          accessToken: accessToken.accessToken,
+          accountId: account.accountId,
+        },
+      )
+      for await (const page of listAccountRolesPaginator) {
+        page.roleList?.forEach((role) => roleList.push(role))
+      }
+    }
+  }
+
+  console.log(roleList)
 
   return configFile // TODO nope, not this
 }
