@@ -16,16 +16,27 @@ import {
 import * as ini from "ini"
 import debounce from "debounce"
 import settings from "electron-settings"
-import { SSOOIDCClient, RegisterClientCommand } from "@aws-sdk/client-sso-oidc"
+import {
+  SSOOIDCClient,
+  RegisterClientCommand,
+  StartDeviceAuthorizationCommand,
+  CreateTokenCommand,
+  AuthorizationPendingException,
+  CreateTokenCommandOutput,
+} from "@aws-sdk/client-sso-oidc"
 import { OidcClientSchema } from "models"
 
 const readFile = util.promisify(fs.readFile)
+
+const pendingRequests = new Set()
+const recentlyCancelledRequests = new Set()
 
 interface GetConfigArgs {
   configPath?: string
 }
 interface GetSsoConfigArgs extends GetConfigArgs {
   profileName: string
+  requestId: string
 }
 
 interface GetProfilesArgs {
@@ -46,6 +57,7 @@ const readFileOptions = {
   encoding: "utf-8" as const,
   flag: "r" as const,
 }
+
 function cleanProfileKey(key: string): string {
   return key.replace("profile ", "").replace("sso-session ", "")
 }
@@ -227,39 +239,122 @@ export function watchConfigFile(callback: { (newConfig: Config): void }): void {
   )
 }
 
+async function getOidcClient({
+  profileName,
+  ssoSession,
+}: GetOidcClientArgs): Promise<OidcClient> {
+  const ssoClient = new SSOOIDCClient()
+  let oidcClient: OidcClient
+  const cachedClient = await settings.get(["oidcClients", profileName])
+  if (cachedClient !== undefined) {
+    oidcClient = OidcClientSchema.parse(cachedClient)
+    if (oidcClient.clientSecretExpiresAt * 1000 > new Date().getTime()) {
+      return oidcClient
+    }
+  }
+  const response = await ssoClient.send(
+    new RegisterClientCommand({
+      clientName: "nz.jnawk.awsconsole",
+      clientType: "public",
+      grantTypes: ["urn:ietf:params:oauth:grant-type:device_code"],
+      issuerUrl: ssoSession.sso_start_url,
+      scopes: ["sso:account:access"],
+    }),
+  )
+  oidcClient = {
+    clientId: response.clientId!,
+    clientSecret: response.clientSecret!,
+    clientSecretExpiresAt: response.clientSecretExpiresAt!,
+  }
+  settings.set(["oidcClients", profileName], oidcClient)
+  return oidcClient
+}
+
 export async function getSsoConfig({
   profileName,
+  requestId,
   configPath = path.join(os.homedir(), ".aws"),
 }: GetSsoConfigArgs): Promise<Config | undefined> {
-  console.log(`Getting SSO config for ${profileName}`)
-  const client = new SSOOIDCClient()
-
   const configFile = await getConfig({ configPath })
   const ssoSession = configFile.ssoSessions?.[profileName]
   if (ssoSession === undefined) {
     return undefined
   }
-  let oidcClient: OidcClient
-  const cachedClient = await settings.get(["oidcClients", profileName])
-  if (cachedClient !== undefined) {
-    oidcClient = OidcClientSchema.parse(cachedClient)
-  } else {
-    const response = await client.send(
-      new RegisterClientCommand({
-        clientName: "nz.jnawk.awsconsole",
-        clientType: "public",
-        grantTypes: ["urn:ietf:params:oauth:grant-type:device_code"],
-        issuerUrl: ssoSession.sso_start_url,
-        scopes: ["sso:account:access"],
-      }),
-    )
-    oidcClient = {
-      clientId: response.clientId!,
-      clientSecret: response.clientSecret!,
-      clientSecretExpiresAt: response.clientSecretExpiresAt!,
+
+  // TODO rewrite in terms of get token, get token will get clients as required
+  const oidcClient = await getOidcClient({ profileName, ssoSession })
+
+  const ssoClient = new SSOOIDCClient()
+  const response = await ssoClient.send(
+    new StartDeviceAuthorizationCommand({
+      clientId: oidcClient.clientId,
+      clientSecret: oidcClient.clientSecret,
+      startUrl: ssoSession.sso_start_url!,
+    }),
+  )
+
+  console.log(`${requestId}: ${response.verificationUriComplete}`)
+  setTimeout(
+    () => pendingRequests.delete(requestId),
+    response.expiresIn! * 1000,
+  )
+
+  const deadline = new Date().getTime() + 1000 * response.expiresIn!
+
+  const tokenGetter = (
+    resolve: {
+      (
+        response: CreateTokenCommandOutput | Promise<CreateTokenCommandOutput>,
+      ): void
+    },
+    reject: { (value: unknown): void },
+  ): void => {
+    if (
+      !pendingRequests.has(requestId) ||
+      recentlyCancelledRequests.has(requestId)
+    ) {
+      return reject("Cancelled!")
     }
-    settings.set(["oidcClients", profileName], oidcClient)
+
+    ssoClient
+      .send(
+        new CreateTokenCommand({
+          clientId: oidcClient.clientId,
+          clientSecret: oidcClient.clientSecret,
+          grantType: "urn:ietf:params:oauth:grant-type:device_code",
+          deviceCode: response.deviceCode!,
+        }),
+      )
+      .then(resolve)
+      .catch((e) => {
+        if (new Date().getTime() > deadline) {
+          console.log("too late")
+          reject(e)
+        } else if (e instanceof AuthorizationPendingException) {
+          setTimeout(
+            () => tokenGetter(resolve, reject),
+            response.interval! * 1000,
+          )
+        } else {
+          console.log("/shrug")
+          reject(e)
+        }
+      })
   }
 
+  pendingRequests.add(requestId)
+  const tokenResponse: CreateTokenCommandOutput = await new Promise(tokenGetter)
+  console.log(tokenResponse.accessToken)
+
   return configFile // TODO nope, not this
+}
+
+export function cancelGetSsoConfig(requestId: string): void {
+  console.log(`cancelling ${requestId}`)
+  recentlyCancelledRequests.add(requestId)
+  setTimeout((): void => {
+    recentlyCancelledRequests.delete(requestId)
+  }, 600 * 1000)
+  pendingRequests.delete(requestId)
+  console.log(pendingRequests)
 }
