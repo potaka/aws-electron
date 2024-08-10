@@ -18,6 +18,7 @@ export const SsoSessionSchema = Extra.merge(
   z.object({
     sso_start_url: z.string().optional(),
     sso_registration_scopes: z.string().optional(),
+    sso_region: z.string().optional(),
   }),
 )
 
