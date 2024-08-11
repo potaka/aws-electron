@@ -43,7 +43,7 @@ function SsoProfiles({ profileName }: SsoProfilesProps): JSX.Element {
       {ssoRoles[profileName].map((role: unknown, index: number) => (
         <ProfileAccordion
           key={index}
-          profileName={`${role.accountId}-${role.roleName}`}
+          profileName={`${role.accountName}-${role.roleName}`}
           profile={{
             entryType: "sso-session",
             order: index,

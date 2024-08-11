@@ -278,6 +278,7 @@ export async function getAccessToken(
     if (ssoToken.expiresAt > new Date().getTime()) {
       return ssoToken
     }
+    // TODO token renewal??
   }
 
   // TODO this is janky.
@@ -370,7 +371,7 @@ export async function getSsoConfig({
     { client: ssoClient, pageSize: 100 },
     { accessToken: accessToken.accessToken },
   )
-  const roleList: Array<sso.RoleInfo> = []
+  const roleList: Array<sso.RoleInfo & { accountName?: string }> = []
   // TODO this needs to stream back rather than this long pause to collect..
   for await (const page of listAccountsPaginator) {
     for (const account of page.accountList!) {
@@ -383,7 +384,9 @@ export async function getSsoConfig({
         },
       )
       for await (const page of listAccountRolesPaginator) {
-        page.roleList?.forEach((role) => roleList.push(role))
+        page.roleList?.forEach((role) =>
+          roleList.push({ ...role, accountName: account.accountName }),
+        )
       }
     }
   }
