@@ -6,11 +6,11 @@ import {
   AssumeRoleCommandInput,
 } from "@aws-sdk/client-sts"
 import { fromIni } from "@aws-sdk/credential-providers"
-import { getProfileList } from "./awsConfig"
-
+import { getProfileList, getAccessToken } from "./awsConfig"
 import { Config, SigninResultSchema } from "models"
+import * as sso from "@aws-sdk/client-sso"
 
-interface GetFederationUrlArguments {
+interface GetFederationUrlArgs {
   Action: string
   SigninToken?: string
   Destination?: string
@@ -19,6 +19,24 @@ interface GetFederationUrlArguments {
   SessionType?: string
   Session?: string
 }
+
+interface GetConsoleUrlArgsBase {
+  profileName: string
+}
+
+interface GetConsoleUrlStandardArgs extends GetConsoleUrlArgsBase {
+  type: "standard"
+  config: Config
+  tokenCode?: string
+}
+
+interface GetConsoleUrlSsoArgs extends GetConsoleUrlArgsBase {
+  type: "sso"
+  accountId?: string
+  roleName?: string
+}
+
+type GetConsoleUrlArgs = GetConsoleUrlStandardArgs | GetConsoleUrlSsoArgs
 
 const defaultConsoleUrl = "https://console.aws.amazon.com"
 
@@ -31,11 +49,40 @@ interface STSAndCredentials {
   credentials: AwsCredentials
 }
 
-async function getRoleCredentials(
-  config: Config,
-  tokenCode: string,
-  profileName: string,
-): Promise<AwsCredentials> {
+async function getSsoCredentials({
+  profileName,
+  accountId,
+  roleName,
+}: GetConsoleUrlSsoArgs): Promise<AwsCredentials> {
+  const accessToken = await getAccessToken(
+    { profileName, ssoSession: {} },
+    true,
+  )
+
+  const ssoClient = new sso.SSOClient({
+    region: "ap-southeast-2", // TODO pull the region in
+    maxAttempts: 10,
+  })
+  const credentials = await ssoClient.send(
+    new sso.GetRoleCredentialsCommand({
+      accessToken: accessToken.accessToken,
+      accountId,
+      roleName,
+    }),
+  )
+  return {
+    AccessKeyId: credentials.roleCredentials?.accessKeyId,
+    SecretAccessKey: credentials.roleCredentials?.secretAccessKey,
+    SessionToken: credentials.roleCredentials?.sessionToken,
+    Expiration: undefined,
+  }
+}
+
+async function getRoleCredentials({
+  config,
+  tokenCode,
+  profileName,
+}: GetConsoleUrlStandardArgs): Promise<AwsCredentials> {
   const profileList: string[] = getProfileList(config.profiles, profileName)
 
   const { credentials } = (await profileList.reduce(
@@ -101,7 +148,7 @@ async function getRoleCredentials(
   return credentials
 }
 
-function getFederationUrl(params: GetFederationUrlArguments): string {
+function getFederationUrl(params: GetFederationUrlArgs): string {
   const searchParams = new URLSearchParams(
     Object.entries(params).reduce(
       (
@@ -133,20 +180,28 @@ async function getSigninToken({
   return signinToken
 }
 
-export async function getConsoleUrl(
-  config: Config,
-  tokenCode: string,
-  profileName: string,
-): Promise<string> {
-  const roleCredentials = await getRoleCredentials(
-    config,
-    tokenCode,
-    profileName,
-  )
-  const signinToken = await getSigninToken(roleCredentials)
+export async function getConsoleUrl(args: GetConsoleUrlArgs): Promise<string> {
+  const { type, profileName } = args
+
+  let credentials: AwsCredentials | undefined = undefined
+
+  switch (type) {
+    case "standard":
+      credentials = await getRoleCredentials(args)
+      break
+    case "sso":
+      credentials = await getSsoCredentials(args)
+      break
+  }
+  const signinToken = await getSigninToken(credentials!)
 
   let consoleUrl: string = defaultConsoleUrl
-  const { region } = config.profiles[profileName]
+
+  // TODO drag the SSO region in?   use us-east-1?
+  const { region } =
+    type === "standard"
+      ? args.config.profiles[profileName]
+      : { region: "ap-southeast-2" }
   if (region && region !== "us-east-1") {
     consoleUrl = getConsoleUrlForRegion(region)
   }

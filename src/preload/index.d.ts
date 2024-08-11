@@ -20,6 +20,9 @@ declare global {
       getConfig: { (): Promise<unknown> }
       setTop: { (profileName: string, top: number): void }
       launchConsole: { (profileName: string, mfaCode: string): void }
+      launchSsoConsole: {
+        (profileName: string, accountId: string, roleName: string): void
+      }
       getVersion: { (): Promise<string> }
       getActiveProfileTab: { (): Promise<number> }
       setActiveProfileTab: { (activeProfileTab: number): void }

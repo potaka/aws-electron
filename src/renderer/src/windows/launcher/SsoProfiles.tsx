@@ -51,7 +51,10 @@ function SsoProfiles({ profileName }: SsoProfilesProps): JSX.Element {
             sso_account_id: role.accountId,
             sso_role_name: role.roleName,
           }}
-          launchAction={() => {}}
+          launchAction={() => {
+            api.launchSsoConsole(profileName, role.accountId, role.roleName)
+            dispatch({ type: "launch-console" })
+          }}
         />
       ))}
     </>

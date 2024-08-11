@@ -37,6 +37,14 @@ const api = {
   getConfig: async (): Promise<unknown> => ipcRenderer.invoke("getConfig"),
   launchConsole: (profileName: string, mfaCode: string): void =>
     ipcRenderer.send("launchConsole", profileName, mfaCode),
+
+  launchSsoConsole: (
+    profileName: string,
+    accountId: string,
+    roleName: string,
+  ): void =>
+    ipcRenderer.send("launchSsoConsole", profileName, accountId, roleName),
+
   getVersion: async (): Promise<string> => ipcRenderer.invoke("getVersion"),
   getActiveProfileTab: async (): Promise<number> =>
     ipcRenderer.invoke("getActiveProfileTab"),

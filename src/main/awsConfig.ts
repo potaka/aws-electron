@@ -267,10 +267,10 @@ async function getOidcClient({
   return oidcClient
 }
 
-async function getAccessToken({
-  profileName,
-  ssoSession,
-}: GetOidcClientArgs): Promise<models.SsoToken> {
+export async function getAccessToken(
+  { profileName, ssoSession }: GetOidcClientArgs,
+  cacheOnly: boolean = false,
+): Promise<models.SsoToken> {
   let ssoToken: models.SsoToken
   const cachedToken = await settings.get(["ssoTokens", profileName])
   if (cachedToken !== undefined) {
@@ -278,6 +278,11 @@ async function getAccessToken({
     if (ssoToken.expiresAt > new Date().getTime()) {
       return ssoToken
     }
+  }
+
+  // TODO this is janky.
+  if (cacheOnly) {
+    throw new Error("oops, not in cache")
   }
   const oidcClient = await getOidcClient({ profileName, ssoSession })
   const ssoOidcClient = new ssoOidc.SSOOIDCClient({

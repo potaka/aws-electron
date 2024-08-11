@@ -155,7 +155,87 @@ async function launchConsole(
   profileName: string,
   mfaCode: string,
 ): Promise<void> {
-  const url = await getConsoleUrl(await getConfig(), mfaCode, profileName)
+  const url = await getConsoleUrl({
+    type: "standard",
+    config: await getConfig(),
+    tokenCode: mfaCode,
+    profileName,
+  })
+
+  // Create the browser window.
+  const { windows } = state
+  const windowDetails = windows[profileName]
+
+  const tabsWindow =
+    windowDetails?.window ||
+    new BrowserWindow({
+      width: 900,
+      height: 670,
+      show: false,
+      ...(process.platform === "linux" ? { icon } : {}),
+      webPreferences: {
+        preload: join(__dirname, "../preload/index.js"),
+        sandbox: true,
+        partition: ["persist", profileName].join(":"),
+      },
+    })
+
+  if (!windowDetails) {
+    dispatch({
+      type: "open-window",
+      payload: { profileName, window: tabsWindow },
+    })
+
+    tabsWindow.on("ready-to-show", () => {
+      tabsWindow.show()
+      tabsWindow.webContents.openDevTools()
+      tabsWindow.webContents.send("set-profile-name", profileName)
+      tabsWindow.webContents.send("open-tab", url) // TODO necessary?
+    })
+
+    tabsWindow.on("close", () => {
+      dispatch({ type: "close-window", payload: profileName })
+    })
+
+    tabsWindow.on(
+      "resize",
+      debounce(() => {
+        tabsWindow.contentView.children.forEach((view) => {
+          const { top } = state.windows[profileName]
+          const bounds = {
+            ...tabsWindow.getContentBounds(),
+            x: 0,
+            y: parseInt((top * tabsWindow.webContents.zoomFactor).toFixed(0)),
+          }
+          bounds.height = bounds.height - top
+          view.setBounds(bounds)
+        })
+      }, 100),
+    )
+
+    tabsWindow.webContents.on(
+      "zoom-changed",
+      zoomChange(tabsWindow, profileName),
+    )
+
+    loadWindowContent(tabsWindow, "tabs")
+  }
+  openTab(profileName, url)
+  tabsWindow.webContents.send("open-tab", url)
+}
+
+async function launchSsoConsole(
+  profileName: string,
+  accountId: string,
+  roleName: string,
+): Promise<void> {
+  // TODO reunify
+  const url = await getConsoleUrl({
+    type: "sso",
+    accountId,
+    roleName,
+    profileName,
+  })
 
   // Create the browser window.
   const { windows } = state
@@ -386,6 +466,12 @@ app.whenReady().then(() => {
 
   ipcMain.on("launchConsole", (_, profileName: string, mfaCode: string) =>
     launchConsole(profileName, mfaCode),
+  )
+
+  ipcMain.on(
+    "launchSsoConsole",
+    (_, profileName: string, accountId: string, roleName: string) =>
+      launchSsoConsole(profileName, accountId, roleName),
   )
 
   ipcMain.on("setTop", (_, profileName: string, top: number): void =>
