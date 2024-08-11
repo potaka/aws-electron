@@ -2,37 +2,12 @@ import * as os from "os"
 import * as path from "path"
 import * as fs from "fs"
 import * as util from "util"
-import {
-  Config,
-  ConfigEntry,
-  ConfigEntrySchema,
-  CredentialsSchema,
-  EntryType,
-  EntryTypeSchema,
-  OidcClient,
-  Profile,
-  SsoSession,
-  OidcClientSchema,
-  SsoToken,
-  SsoTokenSchema,
-} from "models"
+import * as models from "models"
 import * as ini from "ini"
 import debounce from "debounce"
 import settings from "electron-settings"
-import {
-  SSOOIDCClient,
-  RegisterClientCommand,
-  StartDeviceAuthorizationCommand,
-  CreateTokenCommand,
-  AuthorizationPendingException,
-  CreateTokenCommandOutput,
-} from "@aws-sdk/client-sso-oidc"
-import {
-  SSOClient,
-  paginateListAccountRoles,
-  paginateListAccounts,
-  RoleInfo,
-} from "@aws-sdk/client-sso"
+import * as ssoOidc from "@aws-sdk/client-sso-oidc"
+import * as sso from "@aws-sdk/client-sso"
 
 const readFile = util.promisify(fs.readFile)
 
@@ -41,7 +16,7 @@ const recentlyCancelledRequests = new Set()
 
 interface GetOidcClientArgs {
   profileName: string
-  ssoSession: SsoSession
+  ssoSession: models.SsoSession
 }
 
 interface GetConfigArgs {
@@ -57,11 +32,11 @@ interface GetAccessTokenArgs extends GetOidcClientArgs {
 }
 
 interface GetProfilesArgs {
-  entries: [string, ConfigEntry][]
+  entries: [string, models.ConfigEntry][]
 }
 
 interface UsableProfileFilterArguments {
-  profiles: Record<string, Profile>
+  profiles: Record<string, models.Profile>
   profileName: string
 }
 
@@ -79,24 +54,24 @@ function cleanProfileKey(key: string): string {
   return key.replace("profile ", "").replace("sso-session ", "")
 }
 
-function entryType(name: string): EntryType {
+function entryType(name: string): models.EntryType {
   const components = name.split(" ")
   if (components.length === 1) {
     return "profile"
   }
-  return EntryTypeSchema.parse(components[0])
+  return models.EntryTypeSchema.parse(components[0])
 }
 
 async function getConfigEntries({
   configPath,
-}: GetConfigArgs): Promise<[string, ConfigEntry][]> {
+}: GetConfigArgs): Promise<[string, models.ConfigEntry][]> {
   const configFilePath = path.join(configPath!, "config")
   const configFileContent = await readFile(configFilePath, readFileOptions)
   const awsConfig = ini.parse(configFileContent)
   const entries = Object.entries(awsConfig).map(
-    ([entryName, entry], index): [string, ConfigEntry] => [
+    ([entryName, entry], index): [string, models.ConfigEntry] => [
       cleanProfileKey(entryName),
-      ConfigEntrySchema.parse({
+      models.ConfigEntrySchema.parse({
         ...entry,
         order: index,
         entryType: entryType(entryName),
@@ -106,7 +81,9 @@ async function getConfigEntries({
   return entries
 }
 
-function getProfiles({ entries }: GetProfilesArgs): Record<string, Profile> {
+function getProfiles({
+  entries,
+}: GetProfilesArgs): Record<string, models.Profile> {
   const profiles = entries
     .filter(([, entry]): boolean => entry.entryType === "profile")
     .map(([profileName, profile]) => ({
@@ -118,7 +95,7 @@ function getProfiles({ entries }: GetProfilesArgs): Record<string, Profile> {
 
 function getSsoSessions({
   entries,
-}: GetProfilesArgs): Record<string, SsoSession> {
+}: GetProfilesArgs): Record<string, models.SsoSession> {
   const ssoSessions = entries
     .filter(([, entry]): boolean => entry.entryType === "sso-session")
     .map(([sessionName, session]) => ({
@@ -139,7 +116,7 @@ async function getCredentials({
   const awsCredentials = ini.parse(credentialsFileContent)
   const credentials = Object.entries(awsCredentials)
     .map(([profileName, profile]) => ({
-      [profileName]: CredentialsSchema.parse(profile),
+      [profileName]: models.CredentialsSchema.parse(profile),
     }))
     .reduce((prev, cur) => ({ ...prev, ...cur }))
 
@@ -152,7 +129,7 @@ async function getCredentials({
 }
 
 export function getProfileList(
-  config: Record<string, Profile>,
+  config: Record<string, models.Profile>,
   profileName: string,
 ): Array<string> {
   const profiles = [profileName]
@@ -193,7 +170,7 @@ function isMultiStageRoleAssumingProfile({
 
 export async function getConfig({
   configPath = path.join(os.homedir(), ".aws"),
-}: GetConfigArgs = {}): Promise<Config> {
+}: GetConfigArgs = {}): Promise<models.Config> {
   const configEntries = await getConfigEntries({ configPath })
   const profiles = getProfiles({ entries: configEntries })
   const ssoSessions = getSsoSessions({ entries: configEntries })
@@ -237,7 +214,9 @@ export async function getConfig({
   }
 }
 
-export function watchConfigFile(callback: { (newConfig: Config): void }): void {
+export function watchConfigFile(callback: {
+  (newConfig: models.Config): void
+}): void {
   const configChanged = debounce(async () => {
     callback(await getConfig())
   }, 10)
@@ -259,18 +238,18 @@ export function watchConfigFile(callback: { (newConfig: Config): void }): void {
 async function getOidcClient({
   profileName,
   ssoSession,
-}: GetOidcClientArgs): Promise<OidcClient> {
-  let oidcClient: OidcClient
+}: GetOidcClientArgs): Promise<models.OidcClient> {
+  let oidcClient: models.OidcClient
   const cachedClient = await settings.get(["oidcClients", profileName])
   if (cachedClient !== undefined) {
-    oidcClient = OidcClientSchema.parse(cachedClient)
+    oidcClient = models.OidcClientSchema.parse(cachedClient)
     if (oidcClient.clientSecretExpiresAt * 1000 > new Date().getTime()) {
       return oidcClient
     }
   }
-  const ssoClient = new SSOOIDCClient()
+  const ssoClient = new ssoOidc.SSOOIDCClient()
   const response = await ssoClient.send(
-    new RegisterClientCommand({
+    new ssoOidc.RegisterClientCommand({
       clientName: "nz.jnawk.awsconsole",
       clientType: "public",
       grantTypes: ["urn:ietf:params:oauth:grant-type:device_code"],
@@ -292,18 +271,20 @@ async function getAccessToken({
   requestId,
   ssoSession,
 }: GetAccessTokenArgs): Promise<SsoToken> {
-  let ssoToken: SsoToken
+  let ssoToken: models.SsoToken
   const cachedToken = await settings.get(["ssoTokens", profileName])
   if (cachedToken !== undefined) {
-    ssoToken = SsoTokenSchema.parse(cachedToken)
+    ssoToken = models.SsoTokenSchema.parse(cachedToken)
     if (ssoToken.expiresAt > new Date().getTime()) {
       return ssoToken
     }
   }
   const oidcClient = await getOidcClient({ profileName, ssoSession })
-  const ssoOidcClient = new SSOOIDCClient({ region: ssoSession.sso_region })
+  const ssoOidcClient = new ssoOidc.SSOOIDCClient({
+    region: ssoSession.sso_region,
+  })
   const response = await ssoOidcClient.send(
-    new StartDeviceAuthorizationCommand({
+    new ssoOidc.StartDeviceAuthorizationCommand({
       clientId: oidcClient.clientId,
       clientSecret: oidcClient.clientSecret,
       startUrl: ssoSession.sso_start_url!,
@@ -320,9 +301,7 @@ async function getAccessToken({
 
   const tokenGetter = (
     resolve: {
-      (
-        response: CreateTokenCommandOutput | Promise<CreateTokenCommandOutput>,
-      ): void
+      (response: ssoOidc.CreateTokenCommandOutput): void
     },
     reject: { (value: unknown): void },
   ): void => {
@@ -335,7 +314,7 @@ async function getAccessToken({
 
     ssoOidcClient
       .send(
-        new CreateTokenCommand({
+        new ssoOidc.CreateTokenCommand({
           clientId: oidcClient.clientId,
           clientSecret: oidcClient.clientSecret,
           grantType: "urn:ietf:params:oauth:grant-type:device_code",
@@ -347,7 +326,7 @@ async function getAccessToken({
         if (new Date().getTime() > deadline) {
           console.log("too late")
           reject(e)
-        } else if (e instanceof AuthorizationPendingException) {
+        } else if (e instanceof ssoOidc.AuthorizationPendingException) {
           setTimeout(
             () => tokenGetter(resolve, reject),
             response.interval! * 1000,
@@ -360,7 +339,9 @@ async function getAccessToken({
   }
 
   pendingRequests.add(requestId)
-  const tokenResponse: CreateTokenCommandOutput = await new Promise(tokenGetter)
+  const tokenResponse: ssoOidc.CreateTokenCommandOutput = await new Promise(
+    tokenGetter,
+  )
   ssoToken = {
     accessToken: tokenResponse.accessToken!,
     expiresAt: new Date().getTime() + tokenResponse.expiresIn! * 1000,
@@ -373,7 +354,7 @@ export async function getSsoConfig({
   profileName,
   requestId,
   configPath = path.join(os.homedir(), ".aws"),
-}: GetSsoConfigArgs): Promise<Config | undefined> {
+}: GetSsoConfigArgs): Promise<Array<sso.RoleInfo> | undefined> {
   const configFile = await getConfig({ configPath })
   const ssoSession = configFile.ssoSessions?.[profileName]
   if (ssoSession === undefined) {
@@ -386,20 +367,20 @@ export async function getSsoConfig({
     ssoSession,
   })
 
-  const ssoClient = new SSOClient({
+  const ssoClient = new sso.SSOClient({
     region: ssoSession.sso_region,
     maxAttempts: 10,
   })
 
-  const listAccountsPaginator = paginateListAccounts(
+  const listAccountsPaginator = sso.paginateListAccounts(
     { client: ssoClient, pageSize: 100 },
     { accessToken: accessToken.accessToken },
   )
-  const roleList: Array<RoleInfo> = []
+  const roleList: Array<sso.RoleInfo> = []
   for await (const page of listAccountsPaginator) {
     for (const account of page.accountList!) {
       console.log(`${account.accountName}`)
-      const listAccountRolesPaginator = paginateListAccountRoles(
+      const listAccountRolesPaginator = sso.paginateListAccountRoles(
         { client: ssoClient, pageSize: 100 },
         {
           accessToken: accessToken.accessToken,
