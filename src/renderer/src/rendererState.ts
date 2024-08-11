@@ -30,6 +30,10 @@ interface HasOptionalActiveProfileTab {
   activeProfileTab?: number
 }
 
+interface HasOptionalSsoRoles {
+  ssoRoles?: Record<string, Array<unknown>> // TODO model
+}
+
 interface SetConfig {
   type: "set-config"
   payload: Config
@@ -82,6 +86,14 @@ interface SetActiveProfileTab {
   payload: number
 }
 
+interface SetSsoRoles {
+  type: "set-sso-roles"
+  payload: {
+    profileName: string
+    ssoRoles: Array<unknown> // TODO model
+  }
+}
+
 export type RendererEvent =
   | SetConfig
   | SetMfaCode
@@ -93,6 +105,7 @@ export type RendererEvent =
   | SetTitleFormat
   | SetVersion
   | SetActiveProfileTab
+  | SetSsoRoles
 
 type RendererState = HasOptionalConfig &
   HasMfaCode &
@@ -100,7 +113,8 @@ type RendererState = HasOptionalConfig &
   HasOptionalSeconds &
   HasOptionalTitleFormat &
   HasOptionalVersion &
-  HasOptionalActiveProfileTab
+  HasOptionalActiveProfileTab &
+  HasOptionalSsoRoles
 
 export function dispatcher(
   state: RendererState,
@@ -131,6 +145,14 @@ export function dispatcher(
       return { ...state, version: event.payload }
     case "set-active-profile-tab":
       return { ...state, activeProfileTab: event.payload }
+    case "set-sso-roles":
+      return {
+        ...state,
+        ssoRoles: {
+          ...(state.ssoRoles || {}),
+          [event.payload.profileName]: event.payload.ssoRoles,
+        },
+      }
   }
 }
 
@@ -139,6 +161,16 @@ export function setConfig(dispatch: React.Dispatch<RendererEvent>): {
 } {
   return (config: unknown) =>
     dispatch({ type: "set-config", payload: ConfigSchema.parse(config) })
+}
+
+export function setSsoRoles(
+  dispatch: React.Dispatch<RendererEvent>,
+  profileName: string,
+): {
+  (ssoRoles: Array<unknown>): void
+} {
+  return (ssoRoles: Array<unknown>) =>
+    dispatch({ type: "set-sso-roles", payload: { profileName, ssoRoles } })
 }
 
 export function setActiveProfileTab(dispatch: React.Dispatch<RendererEvent>): {

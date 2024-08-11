@@ -9,12 +9,7 @@ import {
 import { join } from "path"
 import { electronApp, optimizer, is } from "@electron-toolkit/utils"
 import icon from "../../resources/icon.png?asset"
-import {
-  getConfig,
-  watchConfigFile,
-  getSsoConfig,
-  cancelGetSsoConfig,
-} from "./awsConfig"
+import { getConfig, watchConfigFile, getSsoConfig } from "./awsConfig"
 import { createReducer, initialState, reducer } from "./mainState"
 import { Config } from "models"
 import buildAppMenu from "./menu"
@@ -375,17 +370,13 @@ app.whenReady().then(() => {
 
   ipcMain.handle("getConfig", () => getConfig())
 
-  ipcMain.handle("getSsoConfig", (_, profileName: string, requestId: string) =>
-    getSsoConfig({ profileName, requestId }),
+  ipcMain.handle("getSsoConfig", (_, profileName: string) =>
+    getSsoConfig({ profileName }),
   )
 
   ipcMain.handle("getVersion", app.getVersion)
 
   ipcMain.handle("getActiveProfileTab", getActiveProfileTab)
-
-  ipcMain.on("cancelGetSsoConfig", (_, requestId: string) =>
-    cancelGetSsoConfig(requestId),
-  )
 
   ipcMain.on("setActiveProfileTab", (_, profileTab: number) =>
     setActiveProfileTab(profileTab),

@@ -3,7 +3,7 @@ import "../../assets/main.css"
 import {
   dispatcher,
   initialState,
-  setConfig as _setConfig,
+  setSsoRoles as _setSsoRoles,
 } from "@renderer/rendererState"
 // import ProfileAccordion from "./ProfileAccordion"
 import { useEffect, useReducer } from "react"
@@ -15,19 +15,27 @@ interface SsoProfilesProps {
 }
 
 function SsoProfiles({ profileName }: SsoProfilesProps): JSX.Element {
-  const [{ config }, dispatch] = useReducer(dispatcher, undefined, initialState)
-  const setConfig = _setConfig(dispatch)
+  const [{ ssoRoles }, dispatch] = useReducer(
+    dispatcher,
+    undefined,
+    initialState,
+  )
+  const setSsoRoles = _setSsoRoles(dispatch, profileName)
 
   useEffect(() => {
-    if (config) {
-      return (): void => {}
+    if (ssoRoles) {
+      return undefined
     }
-    const uuid = getUuid()
-    api.getSsoConfig(profileName, uuid).then(setConfig)
+    const timeoutNumber = setTimeout(() => {
+      // this janky shit makes it so  we don't actually fire the damn event
+      // before react has finished piss-farting around calling things twice
+      const uuid = getUuid()
+      api.getSsoConfig(profileName, uuid).then(setSsoRoles)
+    }, 1000)
     return (): void => {
-      api.cancelGetSsoConfig(uuid)
+      clearTimeout(timeoutNumber)
     }
-  }, [config])
+  }, [ssoRoles])
 
   return <>Something for SSO Profile {profileName}</>
 }

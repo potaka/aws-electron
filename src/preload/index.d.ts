@@ -24,9 +24,8 @@ declare global {
       getActiveProfileTab: { (): Promise<number> }
       setActiveProfileTab: { (activeProfileTab: number): void }
       getSsoConfig: {
-        (profileName: string, requestId: sstring): Promise<unknown>
+        (profileName: string): Promise<Array<unknown>>
       }
-      cancelGetSsoConfig: { (requestId: string): void }
     }
   }
 }

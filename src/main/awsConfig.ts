@@ -12,8 +12,6 @@ import * as sso from "@aws-sdk/client-sso"
 const readFile = util.promisify(fs.readFile)
 
 const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code"
-const pendingRequests = new Set()
-const recentlyCancelledRequests = new Set()
 
 interface GetOidcClientArgs {
   profileName: string
@@ -25,11 +23,6 @@ interface GetConfigArgs {
 }
 interface GetSsoConfigArgs extends GetConfigArgs {
   profileName: string
-  requestId: string
-}
-
-interface GetAccessTokenArgs extends GetOidcClientArgs {
-  requestId: string
 }
 
 interface GetProfilesArgs {
@@ -269,9 +262,8 @@ async function getOidcClient({
 
 async function getAccessToken({
   profileName,
-  requestId,
   ssoSession,
-}: GetAccessTokenArgs): Promise<SsoToken> {
+}: GetOidcClientArgs): Promise<models.SsoToken> {
   let ssoToken: models.SsoToken
   const cachedToken = await settings.get(["ssoTokens", profileName])
   if (cachedToken !== undefined) {
@@ -292,12 +284,6 @@ async function getAccessToken({
     }),
   )
 
-  console.log(`${requestId}: ${response.verificationUriComplete}`)
-  setTimeout(
-    () => pendingRequests.delete(requestId),
-    response.expiresIn! * 1000,
-  )
-
   const deadline = new Date().getTime() + 1000 * response.expiresIn!
 
   const tokenGetter = (
@@ -306,13 +292,6 @@ async function getAccessToken({
     },
     reject: { (value: unknown): void },
   ): void => {
-    if (
-      !pendingRequests.has(requestId) ||
-      recentlyCancelledRequests.has(requestId)
-    ) {
-      return reject("Cancelled!")
-    }
-
     ssoOidcClient
       .send(
         new ssoOidc.CreateTokenCommand({
@@ -339,7 +318,6 @@ async function getAccessToken({
       })
   }
 
-  pendingRequests.add(requestId)
   const tokenResponse: ssoOidc.CreateTokenCommandOutput = await new Promise(
     tokenGetter,
   )
@@ -353,7 +331,6 @@ async function getAccessToken({
 
 export async function getSsoConfig({
   profileName,
-  requestId,
   configPath = path.join(os.homedir(), ".aws"),
 }: GetSsoConfigArgs): Promise<Array<sso.RoleInfo> | undefined> {
   const configFile = await getConfig({ configPath })
@@ -398,13 +375,4 @@ export async function getSsoConfig({
 
   return configFile // TODO nope, not this
 }
-
-export function cancelGetSsoConfig(requestId: string): void {
-  console.log(`cancelling ${requestId}`)
-  recentlyCancelledRequests.add(requestId)
-  setTimeout((): void => {
-    recentlyCancelledRequests.delete(requestId)
-  }, 600 * 1000)
-  pendingRequests.delete(requestId)
-  console.log(pendingRequests)
 }
