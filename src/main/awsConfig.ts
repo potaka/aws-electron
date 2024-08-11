@@ -200,6 +200,10 @@ export async function getConfig({
     })
     .map(([profileName]) => profileName)
 
+  const standardProfiles = usableProfiles.filter(
+    (profile) => profiles[profile].sso_session === undefined,
+  )
+
   return {
     profiles,
     credentialProfiles,
@@ -207,6 +211,7 @@ export async function getConfig({
     usableProfiles,
     cachableProfiles,
     ssoSessions,
+    standardProfiles,
   }
 }
 
