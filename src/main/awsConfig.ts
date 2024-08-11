@@ -309,10 +309,9 @@ async function getAccessToken({
           console.log("too late")
           reject(e)
         } else if (e instanceof ssoOidc.AuthorizationPendingException) {
-          setTimeout(
-            () => tokenGetter(resolve, reject),
-            response.interval! * 1000,
-          )
+          setTimeout(() => {
+            tokenGetter(resolve, reject)
+          }, response.interval! * 1000)
         } else {
           console.log("/shrug")
           reject(e)
@@ -343,11 +342,15 @@ export async function getSsoConfig({
     return undefined
   }
 
-  const accessToken = await getAccessToken({
-    profileName,
-    requestId,
-    ssoSession,
-  })
+  let accessToken: models.SsoToken
+  try {
+    accessToken = await getAccessToken({
+      profileName,
+      ssoSession,
+    })
+  } catch {
+    return undefined
+  }
 
   const ssoClient = new sso.SSOClient({
     region: ssoSession.sso_region,
@@ -375,8 +378,5 @@ export async function getSsoConfig({
     }
   }
 
-  console.log(roleList)
-
-  return configFile // TODO nope, not this
-}
+  return roleList
 }

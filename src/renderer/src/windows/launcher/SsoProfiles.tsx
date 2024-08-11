@@ -5,7 +5,7 @@ import {
   initialState,
   setSsoRoles as _setSsoRoles,
 } from "@renderer/rendererState"
-// import ProfileAccordion from "./ProfileAccordion"
+import ProfileAccordion from "./ProfileAccordion"
 import { useEffect, useReducer } from "react"
 import { v4 as getUuid } from "uuid"
 const { api } = window
@@ -37,7 +37,27 @@ function SsoProfiles({ profileName }: SsoProfilesProps): JSX.Element {
     }
   }, [ssoRoles])
 
-  return <>Something for SSO Profile {profileName}</>
+  if (!ssoRoles || ssoRoles[profileName] === undefined) {
+    return <>Fetching roles for SSO Profile {profileName}</>
+  }
+  return (
+    <>
+      {ssoRoles[profileName].map((role: unknown, index: number) => (
+        <ProfileAccordion
+          key={index}
+          profileName={`${role.accountId}-${role.roleName}`}
+          profile={{
+            entryType: "sso-session",
+            order: index,
+            source_profile: profileName,
+            sso_account_id: role.accountId,
+            sso_role_name: role.roleName,
+          }}
+          launchAction={() => {}}
+        />
+      ))}
+    </>
+  )
 }
 
 export default SsoProfiles
