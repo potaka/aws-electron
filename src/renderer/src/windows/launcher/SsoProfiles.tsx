@@ -7,7 +7,6 @@ import {
 } from "@renderer/rendererState"
 import ProfileAccordion from "./ProfileAccordion"
 import { useEffect, useReducer } from "react"
-import { v4 as getUuid } from "uuid"
 const { api } = window
 
 interface SsoProfilesProps {
@@ -29,8 +28,7 @@ function SsoProfiles({ profileName }: SsoProfilesProps): JSX.Element {
     const timeoutNumber = setTimeout(() => {
       // this janky shit makes it so  we don't actually fire the damn event
       // before react has finished piss-farting around calling things twice
-      const uuid = getUuid()
-      api.getSsoConfig(profileName, uuid).then(setSsoRoles)
+      api.getSsoConfig(profileName).then(setSsoRoles)
     }, 1000)
     return (): void => {
       clearTimeout(timeoutNumber)
