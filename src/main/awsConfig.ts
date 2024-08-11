@@ -316,14 +316,12 @@ export async function getAccessToken(
       .then(resolve)
       .catch((e) => {
         if (new Date().getTime() > deadline) {
-          console.log("too late")
           reject(e)
         } else if (e instanceof ssoOidc.AuthorizationPendingException) {
           setTimeout(() => {
             tokenGetter(resolve, reject)
           }, response.interval! * 1000)
         } else {
-          console.log("/shrug")
           reject(e)
         }
       })
@@ -338,6 +336,7 @@ export async function getAccessToken(
     accessToken: tokenResponse.accessToken!,
     expiresAt: new Date().getTime() + tokenResponse.expiresIn! * 1000,
   }
+
   settings.set(["ssoTokens", profileName], ssoToken)
   return ssoToken
 }
@@ -372,6 +371,7 @@ export async function getSsoConfig({
     { accessToken: accessToken.accessToken },
   )
   const roleList: Array<sso.RoleInfo> = []
+  // TODO this needs to stream back rather than this long pause to collect..
   for await (const page of listAccountsPaginator) {
     for (const account of page.accountList!) {
       console.log(`${account.accountName}`)

@@ -430,6 +430,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
 }
 
+// make the settings file user-read only (on not-Windows)
 if (process.platform !== "win32") {
   fs.chmod(settings.file(), 0o600)
 }
