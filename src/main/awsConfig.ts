@@ -11,6 +11,7 @@ import * as sso from "@aws-sdk/client-sso"
 
 const readFile = util.promisify(fs.readFile)
 
+const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code"
 const pendingRequests = new Set()
 const recentlyCancelledRequests = new Set()
 
@@ -252,7 +253,7 @@ async function getOidcClient({
     new ssoOidc.RegisterClientCommand({
       clientName: "nz.jnawk.awsconsole",
       clientType: "public",
-      grantTypes: ["urn:ietf:params:oauth:grant-type:device_code"],
+      grantTypes: [DEVICE_GRANT],
       issuerUrl: ssoSession.sso_start_url,
       scopes: ["sso:account:access"],
     }),
@@ -317,7 +318,7 @@ async function getAccessToken({
         new ssoOidc.CreateTokenCommand({
           clientId: oidcClient.clientId,
           clientSecret: oidcClient.clientSecret,
-          grantType: "urn:ietf:params:oauth:grant-type:device_code",
+          grantType: DEVICE_GRANT,
           deviceCode: response.deviceCode!,
         }),
       )
