@@ -9,6 +9,8 @@ import settings from "electron-settings"
 import * as ssoOidc from "@aws-sdk/client-sso-oidc"
 import * as sso from "@aws-sdk/client-sso"
 
+import { shell } from "electron"
+
 const readFile = util.promisify(fs.readFile)
 
 const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code"
@@ -317,6 +319,8 @@ async function getAccessToken({
         }
       })
   }
+
+  shell.openExternal(`${response.verificationUriComplete}`)
 
   const tokenResponse: ssoOidc.CreateTokenCommandOutput = await new Promise(
     tokenGetter,
