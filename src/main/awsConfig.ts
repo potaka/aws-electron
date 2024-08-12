@@ -255,7 +255,9 @@ async function getOidcClient({
       return oidcClient
     }
   }
-  const ssoClient = new ssoOidc.SSOOIDCClient()
+  const ssoClient = new ssoOidc.SSOOIDCClient({
+    region: ssoSession.sso_region,
+  })
   const response = await ssoClient.send(
     new ssoOidc.RegisterClientCommand({
       clientName: "nz.jnawk.awsconsole",

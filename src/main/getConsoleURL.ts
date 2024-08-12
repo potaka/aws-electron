@@ -22,11 +22,11 @@ interface GetFederationUrlArgs {
 
 interface GetConsoleUrlArgsBase {
   profileName: string
+  config: Config
 }
 
 interface GetConsoleUrlStandardArgs extends GetConsoleUrlArgsBase {
   type: "standard"
-  config: Config
   tokenCode?: string
 }
 
@@ -48,8 +48,8 @@ interface STSAndCredentials {
   sts: STSClient
   credentials: AwsCredentials
 }
-
 async function getSsoCredentials({
+  config,
   profileName,
   accountId,
   roleName,
@@ -60,7 +60,7 @@ async function getSsoCredentials({
   )
 
   const ssoClient = new sso.SSOClient({
-    region: "ap-southeast-2", // TODO pull the region in
+    region: config.ssoSessions![profileName].sso_region,
     maxAttempts: 10,
   })
   const credentials = await ssoClient.send(
@@ -197,11 +197,10 @@ export async function getConsoleUrl(args: GetConsoleUrlArgs): Promise<string> {
 
   let consoleUrl: string = defaultConsoleUrl
 
-  // TODO drag the SSO region in?   use us-east-1?
   const { region } =
     type === "standard"
       ? args.config.profiles[profileName]
-      : { region: "ap-southeast-2" }
+      : { region: args.config.ssoSessions![profileName].sso_region }
   if (region && region !== "us-east-1") {
     consoleUrl = getConsoleUrlForRegion(region)
   }

@@ -232,6 +232,7 @@ async function launchSsoConsole(
   // TODO reunify
   const url = await getConsoleUrl({
     type: "sso",
+    config: await getConfig(),
     accountId,
     roleName,
     profileName,
