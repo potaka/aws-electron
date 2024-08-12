@@ -240,7 +240,10 @@ async function launchSsoConsole(
 
   // Create the browser window.
   const { windows } = state
-  const windowDetails = windows[profileName]
+
+  // TODO use the account name?
+  const profileKey = [profileName, accountId, roleName].join("-")
+  const windowDetails = windows[profileKey]
 
   const tabsWindow =
     windowDetails?.window ||
@@ -252,32 +255,32 @@ async function launchSsoConsole(
       webPreferences: {
         preload: join(__dirname, "../preload/index.js"),
         sandbox: true,
-        partition: ["persist", profileName].join(":"),
+        partition: ["persist", profileKey].join(":"),
       },
     })
 
   if (!windowDetails) {
     dispatch({
       type: "open-window",
-      payload: { profileName, window: tabsWindow },
+      payload: { profileName: profileKey, window: tabsWindow },
     })
 
     tabsWindow.on("ready-to-show", () => {
       tabsWindow.show()
       tabsWindow.webContents.openDevTools()
-      tabsWindow.webContents.send("set-profile-name", profileName)
+      tabsWindow.webContents.send("set-profile-name", profileKey)
       tabsWindow.webContents.send("open-tab", url)
     })
 
     tabsWindow.on("close", () => {
-      dispatch({ type: "close-window", payload: profileName })
+      dispatch({ type: "close-window", payload: profileKey })
     })
 
     tabsWindow.on(
       "resize",
       debounce(() => {
         tabsWindow.contentView.children.forEach((view) => {
-          const { top } = state.windows[profileName]
+          const { top } = state.windows[profileKey]
           const bounds = {
             ...tabsWindow.getContentBounds(),
             x: 0,
@@ -291,12 +294,12 @@ async function launchSsoConsole(
 
     tabsWindow.webContents.on(
       "zoom-changed",
-      zoomChange(tabsWindow, profileName),
+      zoomChange(tabsWindow, profileKey),
     )
 
     loadWindowContent(tabsWindow, "tabs")
   }
-  openTab(profileName, url)
+  openTab(profileKey, url)
   tabsWindow.webContents.send("open-tab", url)
 }
 
