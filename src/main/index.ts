@@ -436,7 +436,14 @@ if (!app.requestSingleInstanceLock()) {
 
 // make the settings file user-read only (on not-Windows)
 if (process.platform !== "win32") {
-  fs.chmod(settings.file(), 0o600)
+  ;(async (): Promise<void> => {
+    try {
+      await fs.chmod(settings.file(), 0o600)
+    } catch {
+      await settings.set({})
+      await fs.chmod(settings.file(), 0o600)
+    }
+  })()
 }
 
 // This method will be called when Electron has finished
