@@ -27,10 +27,8 @@ function StandardProfiles({ config }: StandardProfilesProps): JSX.Element {
       {config &&
         Object.entries(config.profiles)
           .sort(([_a, a], [_b, b]) => a.order! - b.order!)
-          .filter(
-            ([profileName]) =>
-              config.usableProfiles.includes(profileName) &&
-              config.profiles[profileName].sso_session === undefined,
+          .filter(([profileName]) =>
+            config.usableProfiles.includes(profileName),
           )
           .map(([profileName, profile]) => (
             <ProfileAccordion
