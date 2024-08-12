@@ -106,6 +106,23 @@ function Launcher(): JSX.Element {
               </CTabContent>
             </>
           )}
+
+        {Object.entries(config.ssoSessions || {}).length > 0 &&
+          config.standardProfiles.length === 0 && (
+            <>
+              {Object.entries(config.ssoSessions!).map(([ssoSessionName]) => (
+                <SsoProfiles
+                  key={ssoSessionName}
+                  profileName={ssoSessionName}
+                />
+              ))}
+            </>
+          )}
+
+        {Object.entries(config.ssoSessions || {}).length === 0 &&
+          config.standardProfiles.length > 0 && (
+            <StandardProfiles config={config} />
+          )}
       </CContainer>
     </>
   )
