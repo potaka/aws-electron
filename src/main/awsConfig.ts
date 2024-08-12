@@ -105,10 +105,17 @@ async function getCredentials({
   configPath,
 }: GetConfigArgs): Promise<CredentialsProfiles> {
   const credentialsFilePath = path.join(configPath!, "credentials")
-  const credentialsFileContent = await readFile(
-    credentialsFilePath,
-    readFileOptions,
-  )
+  let credentialsFileContent: string
+  try {
+    credentialsFileContent = await readFile(
+      credentialsFilePath,
+      readFileOptions,
+    )
+  } catch {
+    // There is no credentials profile!  Shock!  Must be a SSO-only user, or a
+    // dirty vault user
+    return { credentialProfiles: [], longTermCredentialProfiles: [] }
+  }
   const awsCredentials = ini.parse(credentialsFileContent)
   const credentials = Object.entries(awsCredentials)
     .map(([profileName, profile]) => ({
