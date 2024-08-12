@@ -94,7 +94,7 @@ function Launcher(): JSX.Element {
                   </CTabPane>
                 )}
                 {Object.entries(config.ssoSessions!).map(
-                  ([ssoSessionName, _ssoSession], index) => (
+                  ([ssoSessionName], index) => (
                     <CTabPane
                       visible={activeProfileTab === index}
                       key={ssoSessionName}

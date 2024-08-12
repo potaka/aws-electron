@@ -184,7 +184,6 @@ export async function getConsoleUrl(args: GetConsoleUrlArgs): Promise<string> {
   const { type, profileName } = args
 
   let credentials: AwsCredentials | undefined = undefined
-
   switch (type) {
     case "standard":
       credentials = await getRoleCredentials(args)

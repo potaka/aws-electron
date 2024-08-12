@@ -360,14 +360,14 @@ export async function getSsoConfig({
   if (ssoSession === undefined) {
     return undefined
   }
-
   let accessToken: models.SsoToken
   try {
     accessToken = await getAccessToken({
       profileName,
       ssoSession,
     })
-  } catch {
+  } catch (e) {
+    console.log(e)
     return undefined
   }
 

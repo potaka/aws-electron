@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto"
 import { WebContentsView, BrowserWindow } from "electron"
-
 interface LauncherWindowCreated {
   type: "launcher-window-created"
   payload: { window: Electron.BrowserWindow }
